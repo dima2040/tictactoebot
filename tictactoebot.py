@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import random
 import os
 from typing import Optional
 
@@ -9,6 +8,9 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQu
 from aiogram.filters import CommandStart, Command
 from aiogram.filters.callback_data import CallbackData
 from dotenv import load_dotenv
+
+from tictactoebot.ai import make_random_move, make_minimax_move
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -45,28 +47,24 @@ def end_game(chat_id: int, player_name) -> Optional[str]:
     в случае конца игры очищает доску и возвращает текст с
     поздравлением победителя
     """
-    player = game_data[chat_id] ['player']
-    bot = game_data[chat_id] ['bot']
-    end_game_message = None
+    player = game_data[chat_id]['player']
+    bot = game_data[chat_id]['bot']
     if is_winner(game_data[chat_id], player):
         clear_board(chat_id)
         game_data[chat_id]['score']['player'] += 1
-        end_game_message = f"{player_name} победил!"
+        return f"{player_name} победил!\n/start для начала новой игры"
     
     if is_winner(game_data[chat_id], bot):
         clear_board(chat_id)
         game_data[chat_id]['score']['bot'] += 1
-        end_game_message = "Бот победил!"
+        return "Бот победил!\n/start для начала новой игры"
     
     values = list(game_data[chat_id].values())
     if not EMPTY_SYMBOL in values:
         clear_board(chat_id)
         game_data[chat_id]['score']['tie'] += 1
-        end_game_message = "Ничья!"
-    
-    if end_game_message:
-        return end_game_message + "\n/start для начала новой игры"
-    
+        return "Ничья!\n/start для начала новой игры"
+
     return None
 
 
@@ -97,15 +95,11 @@ def bot_step(chat_id: int):
         return
 
     bot = game_data[chat_id]['bot']
-    game_data[chat_id][make_random_move(empty_cells)] = bot
-
-
-def make_random_move(empty_cells: list[int]) -> int:
-    """
-    Возвращает случайную
-    свободную ячейку на игровом поле
-    """
-    return random.choice(empty_cells)
+    move = make_random_move(empty_cells)
+    # board_list = [game_data[chat_id][i] for i in range(1, 10)]
+    # available_moves = [k - 1 for k, v in game_data[chat_id].items() if v == EMPTY_SYMBOL]
+    # move = make_minimax_move(available_moves, board_list)
+    game_data[chat_id][move] = bot
 
 
 def get_free_positions(chat_id: int) -> list:
@@ -118,7 +112,10 @@ def user_step(chat_id: int, index):
     Проверяет есть ли уже символ отличный от пустого
     в случае если он не задан устанавливает символ игрока
     """
-    player = game_data[chat_id]['player']
+    try:
+        player = game_data[chat_id]['player']
+    except KeyError:
+        return
     if game_data[chat_id][index] == EMPTY_SYMBOL:
         game_data[chat_id][index] = player
 
