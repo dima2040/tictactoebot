@@ -21,11 +21,11 @@ dp = Dispatcher()
 
 CROSS_SYMBOL = '❌'
 ZERO_SYMBOL = '⭕'
-EMPTY_SYMBOL = '.'
+EMPTY_SYMBOL = ' '
 game_data = dict()
 
 
-class ButtonFilter(CallbackData, prefix = 'btn') :
+class ButtonFilter(CallbackData, prefix = 'btn'):
     index: int
     status: str
 
@@ -61,6 +61,7 @@ def end_game(chat_id: int, player_name) -> Optional[str]:
     values = list(game_data[chat_id].values())
     if not EMPTY_SYMBOL in values:
         clear_board(chat_id)
+        game_data[chat_id]['score']['tie'] += 1
         end_game_message = "Ничья!"
     
     if end_game_message:
@@ -88,8 +89,7 @@ def is_winner(bo, le):
 
 def bot_step(chat_id: int):
     """
-    Делает ход ИИ, устанавливая символ в случайную
-    свободную ячейку на игровом поле
+    Делает ход ИИ
     """
     empty_cells = get_free_positions(chat_id)
 
@@ -97,7 +97,15 @@ def bot_step(chat_id: int):
         return
 
     bot = game_data[chat_id]['bot']
-    game_data[chat_id][random.choice(empty_cells)] = bot
+    game_data[chat_id][make_random_move(empty_cells)] = bot
+
+
+def make_random_move(empty_cells: list[int]) -> int:
+    """
+    Возвращает случайную
+    свободную ячейку на игровом поле
+    """
+    return random.choice(empty_cells)
 
 
 def get_free_positions(chat_id: int) -> list:
@@ -161,7 +169,8 @@ def init_score(chat_id: int):
     if not 'score' in game_data[chat_id]:
         game_data[chat_id]['score'] = {
             'bot' : 0,
-            'player' : 0
+            'player' : 0,
+            'tie': 0
         }
 
 
@@ -175,8 +184,9 @@ async def start_game(player_symbol, bot_symbol, message: types.Message):
     username = message.chat.full_name
     player_score = game_data[chat_id]['score']['player']
     bot_score = game_data[chat_id]['score']['bot']
+    tie_score = game_data[chat_id]['score']['tie']
     await message.edit_text(
-           text = f"Текущий счёт: \n{username} : {player_score}\nБот : {bot_score}",
+           text = f"Текущий счёт: \n{username}: {player_score}\nБот: {bot_score}\nНичья: {tie_score}",
            reply_markup=make_reply_keyboard(chat_id))
 
 
