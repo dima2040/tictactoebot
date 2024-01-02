@@ -30,7 +30,7 @@ class ButtonFilter(CallbackData, prefix = 'btn') :
     status: str
 
 
-def clear_board(chat_id):
+def clear_board(chat_id: int) -> None:
     """Заполняет игровое поле пустыми символами"""
     if not chat_id in game_data.keys():
         game_data[chat_id] = dict()
@@ -39,7 +39,7 @@ def clear_board(chat_id):
         game_data[chat_id][i] = EMPTY_SYMBOL
 
 
-def end_game(chat_id, player_name) -> Optional[str]:
+def end_game(chat_id: int, player_name) -> Optional[str]:
     """
     Проверяет на выйгрышную комбинацию или ничью игрока и бота,
     в случае конца игры очищает доску и возвращает текст с
@@ -47,20 +47,24 @@ def end_game(chat_id, player_name) -> Optional[str]:
     """
     player = game_data[chat_id] ['player']
     bot = game_data[chat_id] ['bot']
+    end_game_message = None
     if is_winner(game_data[chat_id], player):
         clear_board(chat_id)
         game_data[chat_id]['score']['player'] += 1
-        return f"{player_name} победил!"
+        end_game_message = f"{player_name} победил!"
     
     if is_winner(game_data[chat_id], bot):
         clear_board(chat_id)
         game_data[chat_id]['score']['bot'] += 1
-        return "Бот победил!"
+        end_game_message = "Бот победил!"
     
     values = list(game_data[chat_id].values())
     if not EMPTY_SYMBOL in values:
         clear_board(chat_id)
-        return 'Ничья!'
+        end_game_message = "Ничья!"
+    
+    if end_game_message:
+        return end_game_message + "\n/start для начала новой игры"
     
     return None
 
@@ -82,34 +86,36 @@ def is_winner(bo, le):
     )
 
 
-def bot_step(chat_id):
+def bot_step(chat_id: int):
     """
     Делает ход ИИ, устанавливая символ в случайную
     свободную ячейку на игровом поле
     """
+    empty_cells = get_free_positions(chat_id)
 
-    empty_cells = list()
-    for key, value in game_data[chat_id].items():
-        if value == EMPTY_SYMBOL:
-            empty_cells.append(key)
-    
     if len(empty_cells) == 0: 
         return
-    bot = game_data[chat_id] ['bot']
+
+    bot = game_data[chat_id]['bot']
     game_data[chat_id][random.choice(empty_cells)] = bot
 
 
-def user_step(chat_id, index):
+def get_free_positions(chat_id: int) -> list:
+    """Получение списка доступных ходов на игровом поле"""
+    return [k for k, v in game_data[chat_id].items() if v == EMPTY_SYMBOL]
+
+
+def user_step(chat_id: int, index):
     """
     Проверяет есть ли уже символ отличный от пустого
     в случае если он не задан устанавливает символ игрока
     """
-    player = game_data[chat_id] ['player']
+    player = game_data[chat_id]['player']
     if game_data[chat_id][index] == EMPTY_SYMBOL:
         game_data[chat_id][index] = player
 
 
-def make_reply_keyboard(chat_id):
+def make_reply_keyboard(chat_id: int):
     """
     Cоздает пользовательскую клавиатуру.
     Клавиатура состоит из сетки кнопок 3x3,
@@ -129,7 +135,7 @@ def make_reply_keyboard(chat_id):
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
-def make_choice_keyboard():
+def make_choice_keyboard() -> InlineKeyboardMarkup:
     """
     Создает пользовательскую клавиатуру.
     Клавиатура состоит из крестика и нолика.
@@ -145,10 +151,13 @@ def make_choice_keyboard():
             callback_data=ButtonFilter(index=-1, status=ZERO_SYMBOL).pack()
         )
     ])
-    return InlineKeyboardMarkup(inline_keyboard=keyboard)\
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
-def init_score(chat_id):
+def init_score(chat_id: int):
+    """
+    Инициализирует подсчет очков для конкретного пользователя
+    """
     if not 'score' in game_data[chat_id]:
         game_data[chat_id]['score'] = {
             'bot' : 0,
@@ -179,7 +188,9 @@ async def send_welcome(message: types.Message):
 
 @dp.callback_query(ButtonFilter.filter(F.index == -1))
 async def on_choice_key_pressed(query: CallbackQuery, callback_data: ButtonFilter):
-    if query.message is None: return
+    if query.message is None: 
+        return
+    
     player_symbol = callback_data.status
     if player_symbol == CROSS_SYMBOL:
         bot_symbol = ZERO_SYMBOL
@@ -194,6 +205,7 @@ async def on_key_pressed_new(query: CallbackQuery, callback_data: ButtonFilter):
     message = query.message
     if message is None: 
         return
+    
     chat_id = message.chat.id
     player_name = message.chat.full_name
     user_step(chat_id, callback_data.index)
