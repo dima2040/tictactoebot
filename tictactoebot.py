@@ -8,13 +8,13 @@ from aiogram import F, Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.filters import CommandStart, Command
 from aiogram.filters.callback_data import CallbackData
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
 logging.basicConfig(level=logging.INFO)
 
-# load_dotenv()
-# os.environ.get("TTT_API_TOKEN")
-api_token = '6541776369:AAFzTtcxMN3Z9uqu39ZP2yeVU9x0XpIFgWE'
+load_dotenv()
+
+api_token = os.environ.get("TTT_API_TOKEN")
 
 bot = Bot(token=api_token)
 dp = Dispatcher()
@@ -128,6 +128,7 @@ def make_reply_keyboard(chat_id):
 
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
+
 def make_choice_keyboard():
     """
     Создает пользовательскую клавиатуру.
@@ -145,13 +146,15 @@ def make_choice_keyboard():
         )
     ])
     return InlineKeyboardMarkup(inline_keyboard=keyboard)\
-    
+
+
 def init_score(chat_id):
     if not 'score' in game_data[chat_id]:
         game_data[chat_id]['score'] = {
             'bot' : 0,
             'player' : 0
         }
+
 
 async def start_game(player_symbol, bot_symbol, message: types.Message):
     chat_id = message.chat.id
@@ -168,14 +171,11 @@ async def start_game(player_symbol, bot_symbol, message: types.Message):
            reply_markup=make_reply_keyboard(chat_id))
 
 
-
-
-
-
 @dp.message(CommandStart())
 async def send_welcome(message: types.Message):
     welcome_text = "Привет! Выбери, за кого хочешь играть!"
     await message.reply(welcome_text, reply_markup=make_choice_keyboard())
+
 
 @dp.callback_query(ButtonFilter.filter(F.index == -1))
 async def on_choice_key_pressed(query: CallbackQuery, callback_data: ButtonFilter):
@@ -187,6 +187,7 @@ async def on_choice_key_pressed(query: CallbackQuery, callback_data: ButtonFilte
         bot_symbol = CROSS_SYMBOL
 
     await start_game(player_symbol, bot_symbol, query.message)
+
 
 @dp.callback_query(ButtonFilter.filter(F.index > 0))
 async def on_key_pressed_new(query: CallbackQuery, callback_data: ButtonFilter):
