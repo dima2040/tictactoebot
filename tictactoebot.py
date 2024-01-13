@@ -9,7 +9,7 @@ from aiogram.filters import CommandStart, Command
 from aiogram.filters.callback_data import CallbackData
 from dotenv import load_dotenv
 
-from tictactoebot.ai import make_random_move, make_minimax_move
+from tictactoebot import RandomAI, MiniMaxAI, Symbol
 
 
 logging.basicConfig(level=logging.INFO)
@@ -21,13 +21,10 @@ api_token = os.environ.get("TTT_API_TOKEN")
 bot = Bot(token=api_token)
 dp = Dispatcher()
 
-CROSS_SYMBOL = '❌'
-ZERO_SYMBOL = '⭕'
-EMPTY_SYMBOL = ' '
 game_data = dict()
 
 
-class ButtonFilter(CallbackData, prefix = 'btn'):
+class ButtonFilter(CallbackData, prefix="btn"):
     index: int
     status: str
 
@@ -38,7 +35,7 @@ def clear_board(chat_id: int) -> None:
         game_data[chat_id] = dict()
 
     for i in range(1, 10):
-        game_data[chat_id][i] = EMPTY_SYMBOL
+        game_data[chat_id][i] = Symbol.EMPTY
 
 
 def end_game(chat_id: int, player_name) -> Optional[str]:
@@ -60,7 +57,7 @@ def end_game(chat_id: int, player_name) -> Optional[str]:
         return "Бот победил!\n/start для начала новой игры"
     
     values = list(game_data[chat_id].values())
-    if not EMPTY_SYMBOL in values:
+    if not Symbol.EMPTY in values:
         clear_board(chat_id)
         game_data[chat_id]['score']['tie'] += 1
         return "Ничья!\n/start для начала новой игры"
@@ -95,16 +92,25 @@ def bot_step(chat_id: int):
         return
 
     bot = game_data[chat_id]['bot']
-    move = make_random_move(empty_cells)
-    # board_list = [game_data[chat_id][i] for i in range(1, 10)]
-    # available_moves = [k - 1 for k, v in game_data[chat_id].items() if v == EMPTY_SYMBOL]
+    ai_board = {i: get_cell_value_for_ai(v) for i, v in game_data.board.items()}
+    move = RandomAI(ai_board).move()
     # move = make_minimax_move(available_moves, board_list)
     game_data[chat_id][move] = bot
 
 
+def get_cell_value_for_ai(value: Symbol) -> int:
+    if value == game_data.bot:
+        return 1
+    if value == game_data.player:
+        return -1
+    if value == Symbol.EMPTY:
+        return 0
+    raise ValueError
+
+
 def get_free_positions(chat_id: int) -> list:
     """Получение списка доступных ходов на игровом поле"""
-    return [k for k, v in game_data[chat_id].items() if v == EMPTY_SYMBOL]
+    return [k for k, v in game_data[chat_id].items() if v == Symbol.EMPTY]
 
 
 def user_step(chat_id: int, index):
@@ -116,7 +122,7 @@ def user_step(chat_id: int, index):
         player = game_data[chat_id]['player']
     except KeyError:
         return
-    if game_data[chat_id][index] == EMPTY_SYMBOL:
+    if game_data[chat_id][index] == Symbol.EMPTY:
         game_data[chat_id][index] = player
 
 
@@ -146,16 +152,18 @@ def make_choice_keyboard() -> InlineKeyboardMarkup:
     Клавиатура состоит из крестика и нолика.
     """
     keyboard = list()
-    keyboard.append([
-        InlineKeyboardButton(
-            text=CROSS_SYMBOL, 
-            callback_data=ButtonFilter(index=-1, status=CROSS_SYMBOL).pack()
-        ),
-        InlineKeyboardButton(
-            text=ZERO_SYMBOL, 
-            callback_data=ButtonFilter(index=-1, status=ZERO_SYMBOL).pack()
-        )
-    ])
+    keyboard.append(
+        [
+            InlineKeyboardButton(
+                text=Symbol.CROSS,
+                callback_data=ButtonFilter(index=-1, status=Symbol.CROSS).pack(),
+            ),
+            InlineKeyboardButton(
+                text=Symbol.ZERO,
+                callback_data=ButtonFilter(index=-1, status=Symbol.ZERO).pack(),
+            ),
+        ]
+    )
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
@@ -183,8 +191,9 @@ async def start_game(player_symbol, bot_symbol, message: types.Message):
     bot_score = game_data[chat_id]['score']['bot']
     tie_score = game_data[chat_id]['score']['tie']
     await message.edit_text(
-           text = f"Текущий счёт: \n{username}: {player_score}\nБот: {bot_score}\nНичья: {tie_score}",
-           reply_markup=make_reply_keyboard(chat_id))
+        text=f"Текущий счёт: \n{username}: {player_score}\nБот: {bot_score}\nНичья: {tie_score}",
+        reply_markup=make_reply_keyboard(chat_id),
+    )
 
 
 @dp.message(CommandStart())
@@ -199,10 +208,10 @@ async def on_choice_key_pressed(query: CallbackQuery, callback_data: ButtonFilte
         return
     
     player_symbol = callback_data.status
-    if player_symbol == CROSS_SYMBOL:
-        bot_symbol = ZERO_SYMBOL
+    if player_symbol == Symbol.CROSS:
+        bot_symbol = Symbol.ZERO
     else:
-        bot_symbol = CROSS_SYMBOL
+        bot_symbol = Symbol.CROSS
 
     await start_game(player_symbol, bot_symbol, query.message)
 
