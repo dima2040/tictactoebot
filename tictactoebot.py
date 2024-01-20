@@ -9,7 +9,7 @@ from aiogram.filters import CommandStart, Command
 from aiogram.filters.callback_data import CallbackData
 from dotenv import load_dotenv
 
-from tictactoebot import RandomAI, MiniMaxAI, Symbol
+from tictactoebot import RandomAI, MiniMaxAI, Symbol, get_translate
 
 
 logging.basicConfig(level=logging.INFO)
@@ -198,7 +198,7 @@ async def start_game(player_symbol, bot_symbol, message: types.Message):
 
 @dp.message(CommandStart())
 async def send_welcome(message: types.Message):
-    welcome_text = "Привет! Выбери, за кого хочешь играть!"
+    welcome_text = get_translate(message.from_user.language_code)['welcome']
     await message.reply(welcome_text, reply_markup=make_choice_keyboard())
 
 
