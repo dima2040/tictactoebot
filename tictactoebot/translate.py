@@ -9,6 +9,19 @@ def get_languages() -> list:
         langs.append(name)
     return langs
 
+def get_languages_dict() -> dict:
+    langs = dict()
+    for file in os.listdir(translations_dir):
+        code = file.replace(".json", "")
+        data = json.load(open(f"{translations_dir}{file}"))
+        name = data['name']
+        langs[code] = name
+    return langs
+
+
+
+
+
 def is_lang_supported(name: str) -> bool:
     return name in get_languages()
 

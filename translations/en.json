@@ -1,4 +1,6 @@
 {
+    "name": "English",
+    "pick_lang" : "Hi! Pick your language" ,
     "welcome": "Hello! Choose your side!",
     "win.bot": "Bot win!\\n/start to start a new game",
     "win.player": "{player_name} win!\\n/start to start a new game",

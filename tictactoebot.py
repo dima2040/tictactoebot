@@ -8,8 +8,8 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQu
 from aiogram.filters import CommandStart, Command
 from aiogram.filters.callback_data import CallbackData
 from dotenv import load_dotenv
-
-from tictactoebot import RandomAI, MiniMaxAI, Symbol, get_translate
+import random
+from tictactoebot import RandomAI, MiniMaxAI, Symbol, get_translate, ButtonFilter, LanguageFilter, make_lang_kb, get_languages_dict, GameData
 
 
 logging.basicConfig(level=logging.INFO)
@@ -23,10 +23,9 @@ dp = Dispatcher()
 
 game_data = dict()
 
+langs = dict()
 
-class ButtonFilter(CallbackData, prefix="btn"):
-    index: int
-    status: str
+
 
 
 def clear_board(chat_id: int) -> None:
@@ -82,21 +81,35 @@ def is_winner(bo, le):
     )
 
 
-def bot_step(chat_id: int):
+#def bot_step(chat_id: int):
     """
     Делает ход ИИ
     """
-    empty_cells = get_free_positions(chat_id)
+   # empty_cells = get_free_positions(chat_id)
 
+    #if len(empty_cells) == 0: 
+  #      return
+
+  #  bot = game_data[chat_id]['bot']
+  #  ai_board = {i: get_cell_value_for_ai(v) for i, v in game_data.board.items()}
+  #  move = RandomAI(ai_board).move()
+    # move = make_minimax_move(available_moves, board_list)
+   # game_data[chat_id][move] = bot
+def bot_step(chat_id):
+    """
+    Делает ход ИИ, устанавливая символ в случайную
+    свободную ячейку на игровом поле
+    """
+    empty_cells = list()
+    for key, value in game_data[chat_id].items():
+        if value == Symbol.EMPTY:
+            empty_cells.append(key)
+    
     if len(empty_cells) == 0: 
         return
-
+    
     bot = game_data[chat_id]['bot']
-    ai_board = {i: get_cell_value_for_ai(v) for i, v in game_data.board.items()}
-    move = RandomAI(ai_board).move()
-    # move = make_minimax_move(available_moves, board_list)
-    game_data[chat_id][move] = bot
-
+    game_data[chat_id][random.choice(empty_cells)] = bot 
 
 def get_cell_value_for_ai(value: Symbol) -> int:
     if value == game_data.bot:
@@ -198,9 +211,19 @@ async def start_game(player_symbol, bot_symbol, message: types.Message):
 
 @dp.message(CommandStart())
 async def send_welcome(message: types.Message):
-    welcome_text = get_translate(message.from_user.language_code)['welcome']
-    await message.reply(welcome_text, reply_markup=make_choice_keyboard())
+    welcome_text = get_translate(message.from_user.language_code)['pick_lang']
+    await message.reply(welcome_text, reply_markup=make_lang_kb(get_languages_dict()))
 
+@dp.callback_query(LanguageFilter.filter())
+async def on_language_picked(query: CallbackQuery, callback_data: LanguageFilter):
+    if query.message is None: return
+    code = callback_data.code
+    user_id = query.from_user.id
+    langs[user_id] = code
+    await query.message.edit_text(
+        text=get_translate(code)['welcome'], 
+        reply_markup=make_choice_keyboard()
+    )
 
 @dp.callback_query(ButtonFilter.filter(F.index == -1))
 async def on_choice_key_pressed(query: CallbackQuery, callback_data: ButtonFilter):
