@@ -9,9 +9,9 @@ from aiogram.filters import CommandStart, Command
 from aiogram.filters.callback_data import CallbackData
 from dotenv import load_dotenv
 import random
-from tictactoebot import RandomAI, MiniMaxAI, Symbol, get_translate, ButtonFilter, LanguageFilter, make_lang_kb, get_languages_dict, GameData
+from tictactoebot import *
 
-
+     
 logging.basicConfig(level=logging.INFO)
 
 load_dotenv()
@@ -23,10 +23,8 @@ dp = Dispatcher()
 
 game_data = dict()
 
-langs = dict()
-
-
-
+langs = load_user_languages()
+print(langs)
 
 def clear_board(chat_id: int) -> None:
     """Заполняет игровое поле пустыми символами"""
@@ -48,18 +46,21 @@ def end_game(chat_id: int, player_name) -> Optional[str]:
     if is_winner(game_data[chat_id], player):
         clear_board(chat_id)
         game_data[chat_id]['score']['player'] += 1
-        return f"{player_name} победил!\n/start для начала новой игры"
+        end_game_text =  get_translate(langs[chat_id])['win.player']
+        return end_game_text.format(player_name)
     
     if is_winner(game_data[chat_id], bot):
         clear_board(chat_id)
         game_data[chat_id]['score']['bot'] += 1
-        return "Бот победил!\n/start для начала новой игры"
+        end_game_text =  get_translate(langs[chat_id])['win.bot']
+        return end_game_text
     
     values = list(game_data[chat_id].values())
     if not Symbol.EMPTY in values:
         clear_board(chat_id)
         game_data[chat_id]['score']['tie'] += 1
-        return "Ничья!\n/start для начала новой игры"
+        end_game_text =  get_translate(langs[chat_id])['draw']
+        return end_game_text
 
     return None
 
@@ -81,20 +82,6 @@ def is_winner(bo, le):
     )
 
 
-#def bot_step(chat_id: int):
-    """
-    Делает ход ИИ
-    """
-   # empty_cells = get_free_positions(chat_id)
-
-    #if len(empty_cells) == 0: 
-  #      return
-
-  #  bot = game_data[chat_id]['bot']
-  #  ai_board = {i: get_cell_value_for_ai(v) for i, v in game_data.board.items()}
-  #  move = RandomAI(ai_board).move()
-    # move = make_minimax_move(available_moves, board_list)
-   # game_data[chat_id][move] = bot
 def bot_step(chat_id):
     """
     Делает ход ИИ, устанавливая символ в случайную
@@ -110,6 +97,7 @@ def bot_step(chat_id):
     
     bot = game_data[chat_id]['bot']
     game_data[chat_id][random.choice(empty_cells)] = bot 
+
 
 def get_cell_value_for_ai(value: Symbol) -> int:
     if value == game_data.bot:
@@ -193,7 +181,7 @@ def init_score(chat_id: int):
 
 
 async def start_game(player_symbol, bot_symbol, message: types.Message):
-    chat_id = message.chat.id
+    chat_id = str(message.chat.id)
     clear_board(chat_id)
     init_score(chat_id)
     game_data[chat_id]['player'] = player_symbol
@@ -203,23 +191,45 @@ async def start_game(player_symbol, bot_symbol, message: types.Message):
     player_score = game_data[chat_id]['score']['player']
     bot_score = game_data[chat_id]['score']['bot']
     tie_score = game_data[chat_id]['score']['tie']
+    message_text = get_translate(langs[chat_id])['main_reply']
     await message.edit_text(
-        text=f"Текущий счёт: \n{username}: {player_score}\nБот: {bot_score}\nНичья: {tie_score}",
+        text=message_text.format(username, player_score, bot_score, tie_score),
         reply_markup=make_reply_keyboard(chat_id),
     )
 
+@dp.message(Command('change_lang'))
+async def on_change_lang(message: types.Message):
+    code = langs[str(message.from_user.id)]
+    text = get_translate(code)['pick_lang']
+    await send_pick_lang(message, text)
 
 @dp.message(CommandStart())
 async def send_welcome(message: types.Message):
-    welcome_text = get_translate(message.from_user.language_code)['pick_lang']
-    await message.reply(welcome_text, reply_markup=make_lang_kb(get_languages_dict()))
+    user_id = str(message.from_user.id)
+    if user_id in langs.keys():
+        code = langs[user_id]
+        await message.reply(
+            text=get_translate(code)['welcome'], 
+            reply_markup=make_choice_keyboard()
+        )
+    else:
+        text = get_translate(message.from_user.language_code)['pick_lang']
+        await send_pick_lang(message, text)
 
+async def send_pick_lang(message: types.Message, text: str):
+    await message.reply(
+        text, 
+        reply_markup=make_lang_kb(get_languages_dict())
+    )
 @dp.callback_query(LanguageFilter.filter())
 async def on_language_picked(query: CallbackQuery, callback_data: LanguageFilter):
     if query.message is None: return
     code = callback_data.code
-    user_id = query.from_user.id
+    user_id = str(query.from_user.id)
+    
     langs[user_id] = code
+    save_user_languages(langs)
+    
     await query.message.edit_text(
         text=get_translate(code)['welcome'], 
         reply_markup=make_choice_keyboard()
@@ -245,7 +255,7 @@ async def on_key_pressed_new(query: CallbackQuery, callback_data: ButtonFilter):
     if message is None: 
         return
     
-    chat_id = message.chat.id
+    chat_id =str(message.chat.id)
     player_name = message.chat.full_name
     user_step(chat_id, callback_data.index)
     bot_step(chat_id)
