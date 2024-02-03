@@ -5,5 +5,8 @@
     "win.bot": "Bot menang!\n/start memulai permainan baru",
     "win.player": "{} menang!\n/start untuk memulai permainan baru",
     "draw": "Draw!\n/start untuk memulai permainan baru",
-    "main_reply": "Skor permainan: \n{}: {}\nBot: {}\nDraw: {}"
+    "main_reply": "Skor permainan: \n{}: {}\nBot: {}\nDraw: {}",
+    "difficulty": "Pilih tingkat kesulitan",
+    "difficulty.easy": "👶 Mudah",
+    "difficulty.hard": "☠️ Sulit"  
 }

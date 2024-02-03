@@ -5,5 +5,8 @@
     "win.bot": "Bot win!\n/start para começar um novo jogo",
     "win.player": "{} ganha!\n/start a iniciar um novo jogo",
     "draw": "Empatar!\n/start a iniciar um novo jogo",
-    "main_reply": "Pontuação do jogo: \n{}: {}\nBot: {}\nDraw: {}"
+    "main_reply": "Pontuação do jogo: \n{}: {}\nBot: {}\nDraw: {}",
+    "difficulty": "Escolha a dificuldade",
+    "difficulty.easy": "👶 Fácil",
+    "difficulty.hard": "☠️ Difícil"  
 }

@@ -9,8 +9,16 @@ def save_user_languages(languages: dict) -> None:
     json.dump(languages, open("languages.json", "w"))
 
 
+def save_user_difficulty(difficulties: dict) -> None:
+    json.dump(difficulties, open("difficulties.json", "w"))
+
+
 def load_user_languages() -> dict:
     return  json.load(open("languages.json"))
+
+
+def load_user_difficulty() -> dict:
+    return  json.load(open("difficulties.json"))
 
 
 def get_languages() -> list:

@@ -1,14 +1,14 @@
 import asyncio
 import logging
 import os
+import random
 from typing import Optional
 
 from aiogram import F, Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.filters import CommandStart, Command
-from aiogram.filters.callback_data import CallbackData
 from dotenv import load_dotenv
-import random
+
 from tictactoebot import *
 
      
@@ -24,7 +24,8 @@ dp = Dispatcher()
 game_data = dict()
 
 langs = load_user_languages()
-print(langs)
+difficulties = load_user_difficulty()
+
 
 def clear_board(chat_id: int) -> None:
     """Заполняет игровое поле пустыми символами"""
@@ -84,25 +85,27 @@ def is_winner(bo, le):
 
 def bot_step(chat_id):
     """
-    Делает ход ИИ, устанавливая символ в случайную
-    свободную ячейку на игровом поле
+    Делает ход ИИ
     """
-    empty_cells = list()
-    for key, value in game_data[chat_id].items():
-        if value == Symbol.EMPTY:
-            empty_cells.append(key)
-    
+    empty_cells = get_free_positions(chat_id)
     if len(empty_cells) == 0: 
         return
     
     bot = game_data[chat_id]['bot']
-    game_data[chat_id][random.choice(empty_cells)] = bot 
+    current_player_data = game_data[chat_id]
+    ai_board = {i: get_cell_value_for_ai(current_player_data, current_player_data[i]) for i in range(1, 10)}
+    ai_mapping = {
+        "easy": RandomAI,
+        "hard": MiniMaxAI
+    }
+    move = ai_mapping[difficulties[chat_id]](ai_board).move()
+    game_data[chat_id][move] = bot 
 
 
-def get_cell_value_for_ai(value: Symbol) -> int:
-    if value == game_data.bot:
+def get_cell_value_for_ai(current_player_data: dict, value: Symbol) -> int:
+    if value == current_player_data["bot"]:
         return 1
-    if value == game_data.player:
+    if value == current_player_data["player"]:
         return -1
     if value == Symbol.EMPTY:
         return 0
@@ -201,8 +204,13 @@ async def start_game(player_symbol, bot_symbol, message: types.Message):
 @dp.message(Command('languages'))
 async def on_change_lang(message: types.Message):
     code = langs[str(message.from_user.id)]
-    text = get_translate(code)['pick_lang']
-    await send_pick_lang(message, text)
+    await send_pick_lang(message, code)
+
+
+@dp.message(Command('difficulty'))
+async def on_change_difficulty(message: types.Message):
+    code = langs[str(message.from_user.id)]
+    await send_pick_difficulty(message, code)
 
 
 @dp.message(CommandStart())
@@ -219,10 +227,19 @@ async def send_welcome(message: types.Message):
         await send_pick_lang(message, text)
 
 
-async def send_pick_lang(message: types.Message, text: str):
+async def send_pick_lang(message: types.Message, code: str):
+    text = get_translate(code)['pick_lang']
     await message.reply(
         text, 
         reply_markup=make_lang_kb(get_languages_dict())
+    )
+
+
+async def send_pick_difficulty(message: types.Message, code: str):
+    text = get_translate(code)['difficulty']
+    await message.reply(
+        text,
+        reply_markup=make_difficulty_kb(code)
     )
 
 
@@ -235,6 +252,22 @@ async def on_language_picked(query: CallbackQuery, callback_data: LanguageFilter
     langs[user_id] = code
     save_user_languages(langs)
     
+    await query.message.edit_text(
+        text=get_translate(code)['welcome'], 
+        reply_markup=make_choice_keyboard()
+    )
+
+
+@dp.callback_query(DifficultyFilter.filter())
+async def on_difficulty_picked(query: CallbackQuery, callback_data: DifficultyFilter):
+    if query.message is None: return
+    level = callback_data.level
+    user_id = str(query.from_user.id)
+    
+    difficulties[user_id] = level
+    save_user_difficulty(difficulties)
+    code = langs[user_id]
+
     await query.message.edit_text(
         text=get_translate(code)['welcome'], 
         reply_markup=make_choice_keyboard()

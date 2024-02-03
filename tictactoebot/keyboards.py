@@ -1,5 +1,7 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from .filters import LanguageFilter
+
+from .translate import get_translate
+from .filters import LanguageFilter, DifficultyFilter
 
 
 def make_lang_kb(langs: dict):
@@ -25,4 +27,21 @@ def make_splited_inline_kb(langs: dict, size: int=3, filt=None):
 
     return InlineKeyboardMarkup(
         inline_keyboard=parent
+    )
+
+
+def make_difficulty_kb(code):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=get_translate(code)['difficulty.easy'],
+                    callback_data=DifficultyFilter(level='easy').pack()
+                ),
+                InlineKeyboardButton(
+                    text=get_translate(code)['difficulty.hard'],
+                    callback_data=DifficultyFilter(level='hard').pack()
+                )
+            ]
+        ]
     )
