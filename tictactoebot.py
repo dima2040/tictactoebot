@@ -198,7 +198,7 @@ async def start_game(player_symbol, bot_symbol, message: types.Message):
     )
 
 
-@dp.message(Command('change_lang'))
+@dp.message(Command('languages'))
 async def on_change_lang(message: types.Message):
     code = langs[str(message.from_user.id)]
     text = get_translate(code)['pick_lang']
