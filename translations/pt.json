@@ -1,0 +1,9 @@
+{
+    "name": "🇵🇹 Português",
+    "pick_lang" : "Olá! Escolha a sua língua" ,
+    "welcome": "Olá! Escolhe o teu lado!",
+    "win.bot": "Bot win!\n/start para começar um novo jogo",
+    "win.player": "{} ganha!\n/start a iniciar um novo jogo",
+    "draw": "Empatar!\n/start a iniciar um novo jogo",
+    "main_reply": "Pontuação do jogo: \n{}: {}\nBot: {}\nDraw: {}"
+}

@@ -1,0 +1,9 @@
+{
+    "name": "🇪🇸 Español",
+    "pick_lang" : "¡Hola! Elige tu idioma",
+    "welcome": "¡Hola! Elige tu bando!",
+    "win.bot": "¡Bot win!\n/start para empezar una nueva partida",
+    "win.player": "{} ¡gana!\n/start para empezar una nueva partida",
+    "draw": "¡Desenfundar!\n/start para iniciar una nueva partida",
+    "main_reply": "Puntuación del juego: \n{}: {}\nBot: {}\nDibujar: {}"
+}

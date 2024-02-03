@@ -1,0 +1,9 @@
+{
+    "name": "🇮🇩 Bahasa Indonesia",
+    "pick_lang" : "Hai, pilih bahasa Anda" ,
+    "welcome": "Halo! Pilih sisi Anda!",
+    "win.bot": "Bot menang!\n/start memulai permainan baru",
+    "win.player": "{} menang!\n/start untuk memulai permainan baru",
+    "draw": "Draw!\n/start untuk memulai permainan baru",
+    "main_reply": "Skor permainan: \n{}: {}\nBot: {}\nDraw: {}"
+}
