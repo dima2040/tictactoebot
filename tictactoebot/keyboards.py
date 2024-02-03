@@ -3,12 +3,14 @@ from .filters import LanguageFilter
 
 
 def make_lang_kb(langs: dict):
-    return make_splited_inline_kb(langs, filt=LanguageFilter)
-def make_splited_inline_kb(data: dict, size: int=3, filt=None):
+    return make_splited_inline_kb(langs, size=2, filt=LanguageFilter)
+
+
+def make_splited_inline_kb(langs: dict, size: int=3, filt=None):
     parent, child = list(), list()
     parent.append(child)
     index = 0 
-    for key, value in data.items():
+    for key, value in langs.items():
         child.append(
             InlineKeyboardButton(
                 text=value,

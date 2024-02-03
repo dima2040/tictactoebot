@@ -197,11 +197,13 @@ async def start_game(player_symbol, bot_symbol, message: types.Message):
         reply_markup=make_reply_keyboard(chat_id),
     )
 
+
 @dp.message(Command('change_lang'))
 async def on_change_lang(message: types.Message):
     code = langs[str(message.from_user.id)]
     text = get_translate(code)['pick_lang']
     await send_pick_lang(message, text)
+
 
 @dp.message(CommandStart())
 async def send_welcome(message: types.Message):
@@ -216,11 +218,14 @@ async def send_welcome(message: types.Message):
         text = get_translate(message.from_user.language_code)['pick_lang']
         await send_pick_lang(message, text)
 
+
 async def send_pick_lang(message: types.Message, text: str):
     await message.reply(
         text, 
         reply_markup=make_lang_kb(get_languages_dict())
     )
+
+
 @dp.callback_query(LanguageFilter.filter())
 async def on_language_picked(query: CallbackQuery, callback_data: LanguageFilter):
     if query.message is None: return
@@ -234,6 +239,7 @@ async def on_language_picked(query: CallbackQuery, callback_data: LanguageFilter
         text=get_translate(code)['welcome'], 
         reply_markup=make_choice_keyboard()
     )
+
 
 @dp.callback_query(ButtonFilter.filter(F.index == -1))
 async def on_choice_key_pressed(query: CallbackQuery, callback_data: ButtonFilter):
