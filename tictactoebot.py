@@ -22,113 +22,19 @@ bot = Bot(token=api_token)
 dp = Dispatcher()
 
 game_data = dict()
+#langs = load_user_languages()
+#difficulties = load_user_difficulty()
 
-langs = load_user_languages()
-difficulties = load_user_difficulty()
 
-
-def clear_board(chat_id: int) -> None:
+def init_game(chat_id: int, player_symbol, bot_symbol) -> None:
     """Заполняет игровое поле пустыми символами"""
     if not chat_id in game_data.keys():
-        game_data[chat_id] = dict()
-
-    for i in range(1, 10):
-        game_data[chat_id][i] = Symbol.EMPTY
-
-
-def end_game(chat_id: int, player_name) -> Optional[str]:
-    """
-    Проверяет на выйгрышную комбинацию или ничью игрока и бота,
-    в случае конца игры очищает доску и возвращает текст с
-    поздравлением победителя
-    """
-    player = game_data[chat_id]['player']
-    bot = game_data[chat_id]['bot']
-    if is_winner(game_data[chat_id], player):
-        clear_board(chat_id)
-        game_data[chat_id]['score']['player'] += 1
-        end_game_text =  get_translate(langs[chat_id])['win.player']
-        return end_game_text.format(player_name)
+        game_data[chat_id] = GameData(dict())
     
-    if is_winner(game_data[chat_id], bot):
-        clear_board(chat_id)
-        game_data[chat_id]['score']['bot'] += 1
-        end_game_text =  get_translate(langs[chat_id])['win.bot']
-        return end_game_text
-    
-    values = list(game_data[chat_id].values())
-    if not Symbol.EMPTY in values:
-        clear_board(chat_id)
-        game_data[chat_id]['score']['tie'] += 1
-        end_game_text =  get_translate(langs[chat_id])['draw']
-        return end_game_text
-
-    return None
-
-
-def is_winner(bo, le):
-    """
-    При задании доски и символа игрока эта функция возвращает True, если игрок выиграл.
-    Мы используем bo вместо board и le вместо letter, чтобы не набирать много текста.
-    """
-    return (
-        (bo[7] == le and bo[8] == le and bo[9] == le) or
-        (bo[4] == le and bo[5] == le and bo[6] == le) or
-        (bo[1] == le and bo[2] == le and bo[3] == le) or
-        (bo[7] == le and bo[4] == le and bo[1] == le) or
-        (bo[8] == le and bo[5] == le and bo[2] == le) or
-        (bo[9] == le and bo[6] == le and bo[3] == le) or
-        (bo[7] == le and bo[5] == le and bo[3] == le) or
-        (bo[9] == le and bo[5] == le and bo[1] == le)
-    )
-
-
-def bot_step(chat_id):
-    """
-    Делает ход ИИ
-    """
-    empty_cells = get_free_positions(chat_id)
-    if len(empty_cells) == 0: 
-        return
-    
-    bot = game_data[chat_id]['bot']
-    current_player_data = game_data[chat_id]
-    ai_board = {i: get_cell_value_for_ai(current_player_data, current_player_data[i]) for i in range(1, 10)}
-    ai_mapping = {
-        "easy": RandomAI,
-        "hard": MiniMaxAI
-    }
-    move = ai_mapping[difficulties[chat_id]](ai_board).move()
-    game_data[chat_id][move] = bot 
-
-
-def get_cell_value_for_ai(current_player_data: dict, value: Symbol) -> int:
-    if value == current_player_data["bot"]:
-        return 1
-    if value == current_player_data["player"]:
-        return -1
-    if value == Symbol.EMPTY:
-        return 0
-    raise ValueError
-
-
-def get_free_positions(chat_id: int) -> list:
-    """Получение списка доступных ходов на игровом поле"""
-    return [k for k, v in game_data[chat_id].items() if v == Symbol.EMPTY]
-
-
-def user_step(chat_id: int, index):
-    """
-    Проверяет есть ли уже символ отличный от пустого
-    в случае если он не задан устанавливает символ игрока
-    """
-    try:
-        player = game_data[chat_id]['player']
-    except KeyError:
-        return
-    if game_data[chat_id][index] == Symbol.EMPTY:
-        game_data[chat_id][index] = player
-
+    data = game_data[chat_id]
+    data.player = player_symbol
+    data.bot = bot_symbol
+    data.clear()
 
 def make_reply_keyboard(chat_id: int):
     """
@@ -142,61 +48,28 @@ def make_reply_keyboard(chat_id: int):
         line = list()
         for column in range(3):
             index += 1
-            text = game_data[chat_id][index]
+            text = game_data[chat_id].get_cell(index)
             btn_filter = ButtonFilter(index=index, status=text)
             line.append(InlineKeyboardButton(text=text, callback_data=btn_filter.pack()))
         keyboard.append(line)
 
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
-
-def make_choice_keyboard() -> InlineKeyboardMarkup:
-    """
-    Создает пользовательскую клавиатуру.
-    Клавиатура состоит из крестика и нолика.
-    """
-    keyboard = list()
-    keyboard.append(
-        [
-            InlineKeyboardButton(
-                text=Symbol.CROSS,
-                callback_data=ButtonFilter(index=-1, status=Symbol.CROSS).pack(),
-            ),
-            InlineKeyboardButton(
-                text=Symbol.ZERO,
-                callback_data=ButtonFilter(index=-1, status=Symbol.ZERO).pack(),
-            ),
-        ]
-    )
-    return InlineKeyboardMarkup(inline_keyboard=keyboard)
-
-
-def init_score(chat_id: int):
-    """
-    Инициализирует подсчет очков для конкретного пользователя
-    """
-    if not 'score' in game_data[chat_id]:
-        game_data[chat_id]['score'] = {
-            'bot' : 0,
-            'player' : 0,
-            'tie': 0
-        }
-
-
 async def start_game(player_symbol, bot_symbol, message: types.Message):
     chat_id = str(message.chat.id)
-    clear_board(chat_id)
-    init_score(chat_id)
-    game_data[chat_id]['player'] = player_symbol
-    game_data[chat_id]['bot'] = bot_symbol
+    init_game(chat_id, player_symbol, bot_symbol)
     
     username = message.chat.full_name
-    player_score = game_data[chat_id]['score']['player']
-    bot_score = game_data[chat_id]['score']['bot']
-    tie_score = game_data[chat_id]['score']['tie']
-    message_text = get_translate(langs[chat_id])['main_reply']
+    data = game_data[chat_id]
+    score = data.score
+    translation = get_translate(data.language)
+
+    message_text = translation['main_reply']
     await message.edit_text(
-        text=message_text.format(username, player_score, bot_score, tie_score),
+        text=message_text.format(
+            username, score.player,
+            score.bot, score.draw
+        ),
         reply_markup=make_reply_keyboard(chat_id),
     )
 
@@ -216,8 +89,8 @@ async def on_change_difficulty(message: types.Message):
 @dp.message(CommandStart())
 async def send_welcome(message: types.Message):
     user_id = str(message.from_user.id)
-    if user_id in langs.keys():
-        code = langs[user_id]
+    if user_id in game_data.keys():
+        code = game_data[user_id].language
         await message.reply(
             text=get_translate(code)['welcome'], 
             reply_markup=make_choice_keyboard()
@@ -249,8 +122,11 @@ async def on_language_picked(query: CallbackQuery, callback_data: LanguageFilter
     code = callback_data.code
     user_id = str(query.from_user.id)
     
-    langs[user_id] = code
-    save_user_languages(langs)
+    game_data[user_id] = GameData(dict())
+    data = game_data[user_id]
+
+    data.language = code
+    #save_user_languages(langs)
     
     await query.message.edit_text(
         text=get_translate(code)['welcome'], 
@@ -296,10 +172,12 @@ async def on_key_pressed_new(query: CallbackQuery, callback_data: ButtonFilter):
     
     chat_id =str(message.chat.id)
     player_name = message.chat.full_name
-    user_step(chat_id, callback_data.index)
-    bot_step(chat_id)
+    data = game_data[chat_id]
+
+    data.user_step(callback_data.index)
+    data.bot_step()
     await message.edit_reply_markup(reply_markup=make_reply_keyboard(chat_id))
-    winner = end_game(chat_id, player_name)
+    winner = data.end_game(player_name)
     if winner:
         await message.delete_reply_markup()
         await message.edit_text(winner)

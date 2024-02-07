@@ -1,7 +1,8 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from .translate import get_translate
-from .filters import LanguageFilter, DifficultyFilter
+from .filters import LanguageFilter, DifficultyFilter, ButtonFilter
+from .data import Symbol
 
 
 def make_lang_kb(langs: dict):
@@ -29,6 +30,25 @@ def make_splited_inline_kb(langs: dict, size: int=3, filt=None):
         inline_keyboard=parent
     )
 
+def make_choice_keyboard() -> InlineKeyboardMarkup:
+    """
+    Создает пользовательскую клавиатуру.
+    Клавиатура состоит из крестика и нолика.
+    """
+    keyboard = list()
+    keyboard.append(
+        [
+            InlineKeyboardButton(
+                text=Symbol.CROSS,
+                callback_data=ButtonFilter(index=-1, status=Symbol.CROSS).pack(),
+            ),
+            InlineKeyboardButton(
+                text=Symbol.ZERO,
+                callback_data=ButtonFilter(index=-1, status=Symbol.ZERO).pack(),
+            ),
+        ]
+    )
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 def make_difficulty_kb(code):
     return InlineKeyboardMarkup(
