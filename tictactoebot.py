@@ -59,7 +59,7 @@ def make_reply_keyboard(chat_id: int):
 
 
 async def start_game(player_symbol, bot_symbol, message: types.Message):
-    chat_id = str(message.chat.id)
+    chat_id = message.chat.id
     init_game(chat_id, player_symbol, bot_symbol)
     username = message.chat.full_name
     user = game_data.get_user(chat_id)
@@ -82,13 +82,13 @@ async def on_change_lang(message: types.Message):
 
 @dp.message(Command("difficulty"))
 async def on_change_difficulty(message: types.Message):
-    code = game_data.get_user(message.from_user.id).language
+    code = game_data.get_user(message.from_user.id).difficulty
     await send_pick_difficulty(message, code)
 
 
 @dp.message(CommandStart())
 async def send_welcome(message: types.Message):
-    user_id = str(message.from_user.id)
+    user_id = message.from_user.id
     if game_data.has_user(user_id):
         code = game_data.get_user(user_id).language
         await message.answer(
@@ -113,11 +113,9 @@ async def on_language_picked(query: CallbackQuery, callback_data: LanguageFilter
     if query.message is None:
         return
     code = callback_data.code
-    user_id = str(query.from_user.id)
+    user_id = query.from_user.id
 
-    user = game_data.add_user(user_id)
-    user.language = code
-    user.save()
+    game_data.change_user_language(user_id, code)
 
     await query.message.edit_text(
         text=get_translate(code)["welcome"], reply_markup=make_choice_keyboard()
@@ -129,11 +127,10 @@ async def on_difficulty_picked(query: CallbackQuery, callback_data: DifficultyFi
     if query.message is None:
         return
     level = callback_data.level
-    user_id = str(query.from_user.id)
+    user_id = query.from_user.id
 
+    game_data.change_user_difficulty(user_id, level)
     user = game_data.get_user(user_id)
-    user.difficulty = level
-    user.save()
     code = user.language
 
     await query.message.edit_text(
@@ -161,10 +158,13 @@ async def on_board_pressed(query: CallbackQuery, callback_data: ButtonFilter):
     if message is None:
         return
 
-    chat_id = str(message.chat.id)
+    chat_id = message.chat.id
     player_name = message.chat.full_name
     user = game_data.get_user(chat_id)
     score = user.score
+
+    if not user.is_cell_empty(callback_data.index):
+         return
 
     user.user_step(callback_data.index)
     user.bot_step()

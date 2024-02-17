@@ -1,7 +1,7 @@
 import logging
 import sqlite3
 
-from .data import Language, Difficulty
+from .enums import Language, Difficulty
 
 
 DB_NAME = "gamedata.db"
@@ -11,6 +11,12 @@ logger = logging.getLogger(__name__)
 class Database:
     def __init__(self, db_name: str = DB_NAME):
         self.db_name = db_name
+
+
+
+        self.conn = sqlite3.connect(self.db_name)
+        self.cursor = self.conn.cursor()
+        self.create_tables()
 
     def __enter__(self) -> "Database":
         self.conn = sqlite3.connect(self.db_name)

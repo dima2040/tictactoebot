@@ -1,36 +1,11 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
-from enum import StrEnum
 from typing import Optional
 import json
 from .translate import get_translate
 from .ai import *
-
-CROSS_SYMBOL = "❌"
-ZERO_SYMBOL = "⭕"
-EMPTY_SYMBOL = " "
-
-
-class Symbol(StrEnum):
-    CROSS = CROSS_SYMBOL
-    ZERO = ZERO_SYMBOL
-    EMPTY = EMPTY_SYMBOL
-
-
-class Language(StrEnum):
-    ENGLISH = "en"
-    SPANISH = "es"
-    HINDI = "hi"
-    INDONESIAN = "id"
-    PORTUGUESE = "pt"
-    RUSSIAN = "ru"
-    ARABIAN = "ar"
-
-
-class Difficulty(StrEnum):
-    EASY = "easy"
-    HARD = "hard"
-
+from .enums import *
+from .db import Database, DB_NAME
 
 @dataclass
 class Score:
@@ -48,12 +23,6 @@ class UserData:
     language: str = Language.ENGLISH
     difficulty: str = Difficulty.EASY
     score: Score = field(default_factory=lambda: Score())
-
-    def save(self):
-        data = {"language": self.language, "difficulty": self.difficulty}
-        old_data = json.load(open("save.json"))
-        old_data[self.user_id] = data
-        json.dump(old_data, open("save.json", "w"))
 
     def is_cell_empty(self, index: int) -> bool:
         if self.board[index] == Symbol.EMPTY:
@@ -163,6 +132,14 @@ class UserData:
         return deepcopy(self)
 
     @classmethod
+    def from_tuple(cls, data: tuple):
+        return cls(
+            user_id=data[1],
+            language=data[2],
+            difficulty=data[3]
+        )
+
+    @classmethod
     def from_dict(cls, user_id: str, data: dict):
         return cls(
             user_id=user_id, language=data["language"], difficulty=data["difficulty"]
@@ -172,20 +149,45 @@ class UserData:
 class GameData:
 
     def __init__(self):
+        self.db = Database(DB_NAME)
         self.users = dict()
-        old_data = json.load(open("save.json"))
-        for user_id, user in old_data.items():
-            user_data = UserData.from_dict(user_id, user)
-            self.users[user_id] = user_data
 
-    def get_user(self, user_id: str):
-        return self.users[str(user_id)]
+    def update_user_score(self, user_id: int, score: Score):
+        # TODO: ПОМЕНЯТЬ
+        if user_id in self.users.keys():
+            self.users[user_id].score = score
+        self.db.update_user_score(user_id, score.player, score.bot, score.draw)
 
-    def has_user(self, user_id: str):
-        return str(user_id) in self.users.keys()
+    def get_user(self, user_id: int):
+        if not self.has_user(user_id): return None
+        if user_id in self.users.keys():
+            return self.users[user_id]
+        user = UserData.from_tuple(
+            self.db.get_user_by_chat_id(user_id)
+        )
+        user.clear()
+        self.users[user_id] = user
+        return user
 
-    def add_user(self, user_id: str):
-        user_id = str(user_id)
+
+    def has_user(self, user_id: int):
+        if user_id in self.users.keys():
+            return self.users[user_id] != None
+        return self.db.get_user_by_chat_id(user_id) != None
+
+    def add_user(self, user_id: int):
+        self.db.add_user(user_id)
         user = UserData(user_id)
         self.users[user_id] = user
         return user
+
+    def change_user_language(self, user_id: int, language: Language):
+        if user_id in self.users.keys():
+            self.users[user_id].language = language
+        self.db.change_user_language(user_id, language)
+    
+    def change_user_difficulty(self, user_id: int, difficulty: Difficulty):
+        if user_id in self.users.keys():
+            self.users[user_id].difficulty = difficulty
+        self.db.change_user_difficulty(user_id, difficulty)
+
