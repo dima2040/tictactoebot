@@ -16,39 +16,43 @@ class Symbol(StrEnum):
     ZERO = ZERO_SYMBOL
     EMPTY = EMPTY_SYMBOL
 
+
+class Language(StrEnum):
+    ENGLISH = "en"
+    SPANISH = "es"
+    HINDI = "hi"
+    INDONESIAN = "id"
+    PORTUGUESE = "pt"
+    RUSSIAN = "ru"
+
+
+class Difficulty(StrEnum):
+    EASY = "easy"
+    HARD = "hard"
+
+
 @dataclass
 class Score:
-    player: int=0
-    bot: int=0
-    draw: int=0
+    player: int = 0
+    bot: int = 0
+    draw: int = 0
+
 
 @dataclass
 class UserData:
-    user_id: int 
-    board: dict[int, Symbol]=field(
-        default_factory=lambda: dict()
-    )
-    player: Symbol=Symbol.CROSS
-    bot: Symbol=Symbol.ZERO
-    language: str="en"
-    difficulty: str="easy"
-    score: Score=field(
-        default_factory=lambda: Score()
-    )
-
+    user_id: int
+    board: dict[int, Symbol] = field(default_factory=lambda: dict())
+    player: Symbol = Symbol.CROSS
+    bot: Symbol = Symbol.ZERO
+    language: str = Language.ENGLISH
+    difficulty: str = Difficulty.EASY
+    score: Score = field(default_factory=lambda: Score())
 
     def save(self):
-        data = {
-            'language' : self.language,
-            'difficulty' : self.difficulty
-        }
-        old_data = json.load(open('save.json'))
+        data = {"language": self.language, "difficulty": self.difficulty}
+        old_data = json.load(open("save.json"))
         old_data[self.user_id] = data
-        json.dump(old_data, open('save.json', 'w'))
-
-
-
-
+        json.dump(old_data, open("save.json", "w"))
 
     def is_cell_empty(self, index: int) -> bool:
         if self.board[index] == Symbol.EMPTY:
@@ -74,18 +78,18 @@ class UserData:
         Делает ход ИИ
         """
         empty_cells = self.get_free_positions()
-        if len(empty_cells) == 0: 
+        if len(empty_cells) == 0:
             return
-        
+
         ai_board = {
             i: self.get_cell_value_for_ai(self.get_cell(i)) for i in range(1, 10)
         }
         ai_mapping = {
-            "easy": RandomAI,
-            "hard": MiniMaxAI
+            Difficulty.EASY: RandomAI,
+            Difficulty.HARD: MiniMaxAI
         }
         move = ai_mapping[self.difficulty](ai_board).move()
-        self.set_cell(move, self.bot) 
+        self.set_cell(move, self.bot)
 
     def get_cell_value_for_ai(self, value: Symbol) -> int:
         if value == self.bot:
@@ -113,14 +117,14 @@ class UserData:
         """
         bo = self.board
         return (
-            (bo[7] == le and bo[8] == le and bo[9] == le) or
-            (bo[4] == le and bo[5] == le and bo[6] == le) or
-            (bo[1] == le and bo[2] == le and bo[3] == le) or
-            (bo[7] == le and bo[4] == le and bo[1] == le) or
-            (bo[8] == le and bo[5] == le and bo[2] == le) or
-            (bo[9] == le and bo[6] == le and bo[3] == le) or
-            (bo[7] == le and bo[5] == le and bo[3] == le) or
-            (bo[9] == le and bo[5] == le and bo[1] == le)
+            (bo[7] == le and bo[8] == le and bo[9] == le)
+            or (bo[4] == le and bo[5] == le and bo[6] == le)
+            or (bo[1] == le and bo[2] == le and bo[3] == le)
+            or (bo[7] == le and bo[4] == le and bo[1] == le)
+            or (bo[8] == le and bo[5] == le and bo[2] == le)
+            or (bo[9] == le and bo[6] == le and bo[3] == le)
+            or (bo[7] == le and bo[5] == le and bo[3] == le)
+            or (bo[9] == le and bo[5] == le and bo[1] == le)
         )
 
     def clear(self):
@@ -136,24 +140,23 @@ class UserData:
         if self.is_player_winner():
             self.clear()
             self.score.player += 1
-            end_game_text = get_translate(self.language)['win.player']
+            end_game_text = get_translate(self.language)["win.player"]
             return end_game_text.format(player_name)
-        
+
         if self.is_bot_winner():
             self.clear()
             self.score.bot += 1
-            end_game_text =  get_translate(self.language)['win.bot']
+            end_game_text = get_translate(self.language)["win.bot"]
             return end_game_text
-        
+
         values = list(self.board.values())
         if not Symbol.EMPTY in values:
             self.clear()
             self.score.draw += 1
-            end_game_text =  get_translate(self.language)['draw']
+            end_game_text = get_translate(self.language)["draw"]
             return end_game_text
 
         return None
-
 
     def copy(self):
         return deepcopy(self)
@@ -161,16 +164,15 @@ class UserData:
     @classmethod
     def from_dict(cls, user_id: str, data: dict):
         return cls(
-            user_id=user_id,
-            language=data['language'],
-            difficulty=data['difficulty']
+            user_id=user_id, language=data["language"], difficulty=data["difficulty"]
         )
 
+
 class GameData:
-    
+
     def __init__(self):
         self.users = dict()
-        old_data = json.load(open('save.json'))
+        old_data = json.load(open("save.json"))
         for user_id, user in old_data.items():
             user_data = UserData.from_dict(user_id, user)
             self.users[user_id] = user_data
