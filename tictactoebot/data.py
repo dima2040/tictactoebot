@@ -24,6 +24,7 @@ class Language(StrEnum):
     INDONESIAN = "id"
     PORTUGUESE = "pt"
     RUSSIAN = "ru"
+    ARABIAN = "ar"
 
 
 class Difficulty(StrEnum):
