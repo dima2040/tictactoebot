@@ -126,15 +126,15 @@ async def on_language_picked(query: CallbackQuery, callback_data: LanguageFilter
 async def on_difficulty_picked(query: CallbackQuery, callback_data: DifficultyFilter):
     if query.message is None:
         return
+
     level = callback_data.level
     user_id = query.from_user.id
-
     game_data.change_user_difficulty(user_id, level)
     user = game_data.get_user(user_id)
-    code = user.language
+    language = user.language
 
     await query.message.edit_text(
-        text=get_translate(code)["welcome"], reply_markup=make_choice_keyboard()
+        text=get_translate(language)["welcome"], reply_markup=make_choice_keyboard()
     )
 
 
@@ -161,6 +161,7 @@ async def on_board_pressed(query: CallbackQuery, callback_data: ButtonFilter):
     chat_id = message.chat.id
     player_name = message.chat.full_name
     user = game_data.get_user(chat_id)
+    # TODO Load user score from db
     score = user.score
 
     if not user.is_cell_empty(callback_data.index):

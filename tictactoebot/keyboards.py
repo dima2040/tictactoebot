@@ -10,7 +10,8 @@ def make_lang_kb(langs: dict):
 
 
 def make_splited_inline_kb(langs: dict, size: int=3, filt=None):
-    parent, child = list(), list()
+    parent: list = list()
+    child: list = list()
     parent.append(child)
     index = 0 
     for key, value in langs.items():

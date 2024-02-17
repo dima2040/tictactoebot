@@ -140,9 +140,11 @@ class UserData:
         )
 
     @classmethod
-    def from_dict(cls, user_id: str, data: dict):
+    def from_dict(cls, user_id: int, data: dict):
         return cls(
-            user_id=user_id, language=data["language"], difficulty=data["difficulty"]
+            user_id=user_id,
+            language=data["language"],
+            difficulty=data["difficulty"]
         )
 
 
@@ -153,22 +155,23 @@ class GameData:
         self.users = dict()
 
     def update_user_score(self, user_id: int, score: Score):
-        # TODO: ПОМЕНЯТЬ
         if user_id in self.users.keys():
             self.users[user_id].score = score
         self.db.update_user_score(user_id, score.player, score.bot, score.draw)
 
     def get_user(self, user_id: int):
-        if not self.has_user(user_id): return None
+        if not self.has_user(user_id):
+            return None
+        
         if user_id in self.users.keys():
             return self.users[user_id]
+
         user = UserData.from_tuple(
             self.db.get_user_by_chat_id(user_id)
         )
         user.clear()
         self.users[user_id] = user
         return user
-
 
     def has_user(self, user_id: int):
         if user_id in self.users.keys():
