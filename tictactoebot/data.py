@@ -2,7 +2,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Optional
-
+import json
 from .translate import get_translate
 from .ai import *
 
@@ -23,8 +23,11 @@ class Score:
     draw: int=0
 
 @dataclass
-class GameData:
-    board: dict[int, Symbol]
+class UserData:
+    user_id: int 
+    board: dict[int, Symbol]=field(
+        default_factory=lambda: dict()
+    )
     player: Symbol=Symbol.CROSS
     bot: Symbol=Symbol.ZERO
     language: str="en"
@@ -32,6 +35,20 @@ class GameData:
     score: Score=field(
         default_factory=lambda: Score()
     )
+
+
+    def save(self):
+        data = {
+            'language' : self.language,
+            'difficulty' : self.difficulty
+        }
+        old_data = json.load(open('save.json'))
+        old_data[self.user_id] = data
+        json.dump(old_data, open('save.json', 'w'))
+
+
+
+
 
     def is_cell_empty(self, index: int) -> bool:
         if self.board[index] == Symbol.EMPTY:
@@ -140,3 +157,32 @@ class GameData:
 
     def copy(self):
         return deepcopy(self)
+
+    @classmethod
+    def from_dict(cls, user_id: str, data: dict):
+        return cls(
+            user_id=user_id,
+            language=data['language'],
+            difficulty=data['difficulty']
+        )
+
+class GameData:
+    
+    def __init__(self):
+        self.users = dict()
+        old_data = json.load(open('save.json'))
+        for user_id, user in old_data.items():
+            user_data = UserData.from_dict(user_id, user)
+            self.users[user_id] = user_data
+
+    def get_user(self, user_id: str):
+        return self.users[str(user_id)]
+
+    def has_user(self, user_id: str):
+        return str(user_id) in self.users.keys()
+
+    def add_user(self, user_id: str):
+        user_id = str(user_id)
+        user = UserData(user_id)
+        self.users[user_id] = user
+        return user
