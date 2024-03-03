@@ -12,9 +12,6 @@ logger = logging.getLogger(__name__)
 class Database:
     def __init__(self, db_name: str = DB_NAME):
         self.db_name = db_name
-
-
-
         self.conn = sqlite3.connect(self.db_name)
         self.cursor = self.conn.cursor()
         self.create_tables()
@@ -33,7 +30,7 @@ class Database:
             """
             CREATE TABLE IF NOT EXISTS User (
                 id INTEGER PRIMARY KEY,
-                chat_id TEXT,
+                chat_id INTEGER,
                 language TEXT DEFAULT 'en',
                 difficulty TEXT DEFAULT 'easy',
                 scores INTEGER DEFAULT 0,
@@ -62,7 +59,7 @@ class Database:
 
     def add_user(
         self,
-        chat_id: str,
+        chat_id: int,
         language: Language = Language.ENGLISH,
         difficulty: Difficulty = Difficulty.EASY
     ) -> None:
@@ -78,13 +75,16 @@ class Database:
 
     def get_user_by_id(self, user_id: int):
         self.cursor.execute("SELECT * FROM User WHERE id = ?", (user_id,))
+        logger.info(f"Get user:{user_id} data from db")
         return self.cursor.fetchone()
 
-    def get_user_by_chat_id(self, chat_id: str) -> tuple:
+    def get_user_by_chat_id(self, chat_id: int) -> tuple:
         self.cursor.execute("SELECT * FROM User WHERE chat_id = ?", (chat_id,))
-        return self.cursor.fetchone()
+        result = self.cursor.fetchone()
+        logger.info(f"Get user:{chat_id} data:{result} from db")
+        return result
 
-    def change_user_language(self, chat_id: str, new_language: Language) -> None:
+    def change_user_language(self, chat_id: int, new_language: Language) -> None:
         self.cursor.execute(
             "UPDATE User SET language = ? WHERE chat_id = ?", (new_language, chat_id)
         )
@@ -95,7 +95,7 @@ class Database:
         self.cursor.execute("DELETE FROM User WHERE id = ?", (user_id,))
         self.conn.commit()
 
-    def change_user_difficulty(self, chat_id: str, new_difficulty: Difficulty) -> None:
+    def change_user_difficulty(self, chat_id: int, new_difficulty: Difficulty) -> None:
         self.cursor.execute(
             "UPDATE User SET difficulty = ? WHERE chat_id = ?",
             (new_difficulty, chat_id),
@@ -105,38 +105,26 @@ class Database:
 
     def get_user_score_by_id(self, id: int):
         self.cursor.execute("SELECT * FROM Score WHERE id = ?", (id,))
-        return self.cursor.fetchone()
+        result = self.cursor.fetchone()
+        logger.info(f"Get user:{id} score:{result} from db")
+        return result
 
     def get_user_score_by_user_id(self, user_id: int):
         self.cursor.execute("SELECT * FROM Score WHERE user_id = ?", (user_id,))
-        return self.cursor.fetchone()
+        result = self.cursor.fetchone()
+        logger.info(f"Get user:{user_id} score:{result} from db")
+        return result
 
-    def update_user_score(
-        self, user_id: int, player_inc: int = 0, bot_inc: int = 0, draw_inc: int = 0
-    ) -> None:
+    def update_user_score(self, user_id: int, player: int, bot: int, draw: int) -> None:
         self.cursor.execute(
-            """
+        """
             UPDATE Score 
-            SET player = player + ?,
-                bot = bot + ?,
-                draw = draw + ?
+            SET player = ?,
+                bot = ?,
+                draw = ?
             WHERE user_id = ?
         """,
-            (player_inc, bot_inc, draw_inc, user_id),
+            (player, bot, draw, user_id),
         )
         logger.info(f"Updated user:{user_id} scores")
         self.conn.commit()
-
-
-if __name__ == "__main__":
-    with Database(DB_NAME) as db:
-        db.add_user('12345', Language.ENGLISH, Difficulty.HARD)
-        user = db.get_user_by_chat_id('12345')
-        assert user == {}
-        db.change_user_language('12345', Language.SPANISH)
-        db.change_user_difficulty('12345', Difficulty.EASY)
-        user = db.get_user_by_chat_id('12345')
-        assert user == {}
-        db.update_user_score(user_id=1, player_inc=1)
-        score = db.get_user_score_by_id()
-        assert score == {}
