@@ -64,14 +64,26 @@ async def start_game(player_symbol, bot_symbol, message: types.Message):
     username = message.chat.full_name
     user = game_data.get_user(chat_id)
     score = user.score
-    translation = get_translate(user.language)
-    message_text = translation["main_reply"].format(
-        username, score.player, score.bot, score.draw
-    )
+
+    message_text = translate(
+        user.language, 'main_reply'
+    ).format(username, 'bot')
+    
+      
     await message.edit_text(
         text=message_text,
         reply_markup=make_reply_keyboard(chat_id),
     )
+
+
+@dp.message(Command("profile"))
+async def on_profile(message:types.Message) :
+    user = game_data.get_user(message.from_user.id)
+    username = message.chat.full_name
+
+    text = translate(user.language, 'profile')
+    text = text.format (username, user.language, user.difficulty)
+    await message.reply(text)
 
 
 @dp.message(Command("languages"))
@@ -95,6 +107,7 @@ async def send_welcome(message: types.Message):
             text=get_translate(code)["welcome"], reply_markup=make_choice_keyboard()
         )
     else:
+        game_data.add_user(message.from_user.id)
         await send_pick_lang(message, message.from_user.language_code)
 
 

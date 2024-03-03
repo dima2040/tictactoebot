@@ -5,8 +5,9 @@
     "win.bot": "Bot win!\n/start to start a new game",
     "win.player": "{} win!\n/start to start a new game",
     "draw": "Draw!\n/start to start a new game",
-    "main_reply": "Game score: \n{}: {}\nBot: {}\nDraw: {}",
+    "main_reply": "{} vs {}",
     "difficulty": "Choose difficulty",
     "difficulty.easy": "👶 Easy",
-    "difficulty.hard": "☠️ Hard"    
+    "difficulty.hard": "☠️ Hard",    
+    "profile": "{}\nLanguage: {}\nDifficulty: {}"
 }

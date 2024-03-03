@@ -57,3 +57,12 @@ def get_translate(name: str) -> dict:
         return find_translate(name)
     else:
         return find_translate('en')
+
+
+def translate (name: str, key: str) -> str:
+    tr = get_translate(name)
+    if key in tr.keys():
+        return tr[key]
+    else:
+        tr = get_translate('en')
+        return tr[key]

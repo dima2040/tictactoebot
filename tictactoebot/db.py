@@ -7,6 +7,7 @@ from .enums import Language, Difficulty
 DB_NAME = "gamedata.db"
 logger = logging.getLogger(__name__)
 
+# TODO: Добавить дополнительные параметры в таблицу User
 
 class Database:
     def __init__(self, db_name: str = DB_NAME):

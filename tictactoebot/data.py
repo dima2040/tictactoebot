@@ -13,6 +13,10 @@ class Score:
     bot: int = 0
     draw: int = 0
 
+@dataclass
+class Stats:
+    hard_bot_win_count: int = 0
+    easy_bot_defeat_count: int = 0
 
 @dataclass
 class UserData:
@@ -23,6 +27,7 @@ class UserData:
     language: str = Language.ENGLISH
     difficulty: str = Difficulty.EASY
     score: Score = field(default_factory=lambda: Score())
+    stats: Stats = field(default_factory=lambda: Stats())
 
     def is_cell_empty(self, index: int) -> bool:
         if self.board[index] == Symbol.EMPTY:
