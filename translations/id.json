@@ -8,5 +8,6 @@
     "main_reply": "Skor permainan: \n{}: {}\nBot: {}\nDraw: {}",
     "difficulty": "Pilih tingkat kesulitan",
     "difficulty.easy": "👶 Mudah",
-    "difficulty.hard": "☠️ Sulit"  
+    "difficulty.hard": "☠️ Sulit",
+    "profile": "{}\nBahasa: {}\nKesulitan: {}"
 }

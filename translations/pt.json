@@ -8,5 +8,6 @@
     "main_reply": "Pontuação do jogo: \n{}: {}\nBot: {}\nDraw: {}",
     "difficulty": "Escolha a dificuldade",
     "difficulty.easy": "👶 Fácil",
-    "difficulty.hard": "☠️ Difícil"  
+    "difficulty.hard": "☠️ Difícil",
+    "profile": "{}\nLíngua: {}\nDificuldade: {}"
 }
