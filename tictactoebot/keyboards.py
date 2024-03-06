@@ -1,9 +1,8 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from .translate import get_translate
-from .filters import LanguageFilter, DifficultyFilter, ButtonFilter
+from .translate import translate, get_translate
 from .data import Symbol
-
+from .filters import *
 
 def make_lang_kb(langs: dict):
     return make_splited_inline_kb(langs, size=2, filt=LanguageFilter)
@@ -62,6 +61,48 @@ def make_difficulty_kb(code):
                 InlineKeyboardButton(
                     text=get_translate(code)['difficulty.hard'],
                     callback_data=DifficultyFilter(level='hard').pack()
+                )
+            ]
+        ]
+    )
+def make_menu_keyboard(code):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=translate(code, 'menu.singleplayer'),
+                    callback_data=MenuFilter(action='singleplayer').pack()
+                ),
+                InlineKeyboardButton(
+                    text=translate(code, 'menu.multiplayer'),
+                    callback_data=MenuFilter(action='multiplayer').pack()
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=translate(code, 'menu.profile'),
+                    callback_data=MenuFilter(action='profile').pack()
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=translate(code, 'menu.language'),
+                    callback_data=MenuFilter(action='language').pack()
+                ),
+                InlineKeyboardButton(
+                    text=translate(code, 'menu.difficulty'),
+                    callback_data=MenuFilter(action='difficulty').pack()
+                )
+            ],
+        ]
+    )
+def make_back_kb(language): 
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=translate(language, 'menu.back'),
+                    callback_data=MenuFilter(action='back').pack()
                 )
             ]
         ]

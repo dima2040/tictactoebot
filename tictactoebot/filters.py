@@ -12,3 +12,6 @@ class LanguageFilter(CallbackData, prefix = "lang"):
 
 class DifficultyFilter(CallbackData, prefix = "difficulty"):
     level: str
+
+class MenuFilter(CallbackData, prefix='menu') :
+    action: str

@@ -97,24 +97,55 @@ async def on_change_difficulty(message: types.Message):
     code = game_data.get_user(message.from_user.id).difficulty
     await send_pick_difficulty(message, code)
 
-
+async def send_menu(message, code):
+    await message.edit_text(
+        text=translate(code, "menu"), reply_markup=make_menu_keyboard(code)
+    )
 @dp.message(CommandStart())
 async def send_welcome(message: types.Message):
     user_id = message.from_user.id
     if game_data.has_user(user_id):
         code = game_data.get_user(user_id).language
         await message.answer(
-            text=get_translate(code)["welcome"], reply_markup=make_choice_keyboard()
+            text=translate(code, "welcome"), reply_markup=make_menu_keyboard(code)
         )
     else:
         game_data.add_user(message.from_user.id)
         await send_pick_lang(message, message.from_user.language_code)
 
 
+@dp.callback_query(MenuFilter.filter())
+async def on_menu_btn(query: CallbackQuery, callback_data: MenuFilter) :
+    message = query.message
+    user_id = query.from_user.id
+    user = game_data.get_user(user_id)
+    username = message.chat.full_name
+    action = callback_data.action
+    
+    if action == 'singleplayer':
+        await message.edit_text(
+            text=translate(user.language, 'welcome'),
+            reply_markup=make_choice_keyboard()
+        )
+    elif action == 'multiplayer':
+        await query.answer('Этот раздел еще не готов!')
+    elif action == 'profile':
+        text = translate(user.language, 'profile')
+        text = text.format(username, user.language, user.difficulty)
+        await message.edit_text(text, reply_markup=make_back_kb(user.language))
+ 
+    elif action == 'language':
+       text = translate(user.language,"pick_lang")
+       await message.edit_text(text, reply_markup=make_lang_kb(get_languages_dict()))    
+    
+    elif action == 'difficulty':
+       text = translate(user.language,"difficulty")
+       await message.edit_text(text, reply_markup=make_difficulty_kb(user.language))
+    elif action == 'back':
+        await send_menu(message, user.language)
 async def send_pick_lang(message: types.Message, code: str):
     text = get_translate(code)["pick_lang"]
     await message.reply(text, reply_markup=make_lang_kb(get_languages_dict()))
-
 
 async def send_pick_difficulty(message: types.Message, code: str):
     text = get_translate(code)["difficulty"]
@@ -130,10 +161,7 @@ async def on_language_picked(query: CallbackQuery, callback_data: LanguageFilter
 
     game_data.change_user_language(user_id, code)
 
-    await query.message.edit_text(
-        text=get_translate(code)["welcome"], reply_markup=make_choice_keyboard()
-    )
-
+    await send_menu(query.message, code)
 
 @dp.callback_query(DifficultyFilter.filter())
 async def on_difficulty_picked(query: CallbackQuery, callback_data: DifficultyFilter):
@@ -146,9 +174,7 @@ async def on_difficulty_picked(query: CallbackQuery, callback_data: DifficultyFi
     user = game_data.get_user(user_id)
     language = user.language
 
-    await query.message.edit_text(
-        text=get_translate(language)["welcome"], reply_markup=make_choice_keyboard()
-    )
+    await send_menu (query.message, language)
 
 
 @dp.callback_query(ButtonFilter.filter(F.index == -1))
