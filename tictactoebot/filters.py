@@ -1,10 +1,11 @@
 from aiogram.filters.callback_data import CallbackData
 
 
-class ButtonFilter(CallbackData, prefix="btn"):
+class FieldFilter(CallbackData, prefix="fd"):
     index: int
     status: str
-
+    user1: int
+    user2: int
 
 class LanguageFilter(CallbackData, prefix = "lang"):
     code: str

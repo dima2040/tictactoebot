@@ -9,5 +9,12 @@
     "difficulty": "Pilih tingkat kesulitan",
     "difficulty.easy": "👶 Mudah",
     "difficulty.hard": "☠️ Sulit",
-    "profile": "{}\nBahasa: {}\nKesulitan: {}"
+    "profile": "{}\nBahasa: {}\nKesulitan: {}",
+    "menu" : "Pilih tindakan:",
+    "menu.singleplayer" : "👤 Pemain tunggal",
+    "menu.multiplayer" : "👥 Multiplayer",
+    "menu.profile" : "👨 Profil",
+    "menu.language" : "🇬🇧 Language",
+    "menu.difficulty" : "Kesulitan",
+    "menu.back" : "Kembali"
 }

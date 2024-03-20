@@ -40,11 +40,17 @@ def make_choice_keyboard() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton(
                 text=Symbol.CROSS,
-                callback_data=ButtonFilter(index=-1, status=Symbol.CROSS).pack(),
+                callback_data=FieldFilter(
+                    index=-1, status=Symbol.CROSS,
+                    user1 = 0, user2 = 0
+                ).pack(),
             ),
             InlineKeyboardButton(
                 text=Symbol.ZERO,
-                callback_data=ButtonFilter(index=-1, status=Symbol.ZERO).pack(),
+                callback_data=FieldFilter(
+                    index=-1, status=Symbol.ZERO,
+                    user1 = 0, user2 = 0
+            ).pack(),
             ),
         ]
     )

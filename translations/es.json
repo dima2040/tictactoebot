@@ -9,5 +9,12 @@
     "difficulty": "Elige dificultad",
     "difficulty.easy": "👶 Fácil",
     "difficulty.hard": "☠️ Difícil",
-    "Profile": "{}\nIdioma: {}\nDificultad: {}"
+    "Profile": "{}\nIdioma: {}\nDificultad: {}",
+    "menu" : "Elegir acción:",
+    "menu.singleplayer" : "👤 Un jugador",
+    "menu.multiplayer" : "👥 Multijugador",
+    "menu.profile" : "👨 Perfil",
+    "menu.language" : "🇬🇧 Idioma",
+    "menu.dificulty" : "Dificultad",
+    "menu.back" : "Back"
 }

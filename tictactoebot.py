@@ -8,6 +8,7 @@ from aiogram.filters import CommandStart, Command
 from dotenv import load_dotenv
 
 from tictactoebot import *
+from tictactoebot.modules.inline_queries import router as InlineQueriesRouter
 
 
 logging.basicConfig(
@@ -49,10 +50,10 @@ def make_reply_keyboard(chat_id: int):
         for column in range(3):
             index += 1
             text = user.get_cell(index)
-            btn_filter = ButtonFilter(index=index, status=text)
-            line.append(
-                InlineKeyboardButton(text=text, callback_data=btn_filter.pack())
-            )
+            btn_filter = FieldFilter(
+                index= index, status= text,
+                user1 = chat_id, user2=0
+                )
         keyboard.append(line)
 
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
@@ -177,8 +178,8 @@ async def on_difficulty_picked(query: CallbackQuery, callback_data: DifficultyFi
     await send_menu (query.message, language)
 
 
-@dp.callback_query(ButtonFilter.filter(F.index == -1))
-async def on_choice_key_pressed(query: CallbackQuery, callback_data: ButtonFilter):
+@dp.callback_query(FieldFilter.filter(F.index == -1))
+async def on_choice_key_pressed(query: CallbackQuery, callback_data: FieldFilter):
     if query.message is None:
         return
 
@@ -191,8 +192,8 @@ async def on_choice_key_pressed(query: CallbackQuery, callback_data: ButtonFilte
     await start_game(player_symbol, bot_symbol, query.message)
 
 
-@dp.callback_query(ButtonFilter.filter(F.index > 0))
-async def on_board_pressed(query: CallbackQuery, callback_data: ButtonFilter):
+@dp.callback_query(FieldFilter.filter(F.index > 0))
+async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
     message = query.message
     if message is None:
         return
@@ -221,6 +222,7 @@ async def on_board_pressed(query: CallbackQuery, callback_data: ButtonFilter):
 
 
 async def main():
+    dp.include_router(InlineQueriesRouter)
     await dp.start_polling(bot, skip_updates=True)
 
 
