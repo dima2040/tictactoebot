@@ -16,5 +16,6 @@
     "menu.profile" : "👨 Profile",
     "menu.language" : "🇬🇧 Language",
     "menu.difficulty" : "Difficulty",
-    "menu.back" : "Back"
+    "menu.back" : "Back",
+    "mp.invite_btn" : "Play!"
 }

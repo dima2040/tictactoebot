@@ -16,3 +16,5 @@ class DifficultyFilter(CallbackData, prefix = "difficulty"):
 
 class MenuFilter(CallbackData, prefix='menu') :
     action: str
+class InviteFilter(CallbackData, prefix='iv'):
+    author: int

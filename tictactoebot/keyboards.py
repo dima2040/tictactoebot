@@ -113,3 +113,17 @@ def make_back_kb(language):
             ]
         ]
     )
+
+def make_invite_kb(authorId, language):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=translate(language, 'mp.invite_btn'),
+                    callback_data=InviteFilter(
+                        author=authorId
+                    ).pack()
+                )
+            ]
+        ]
+    )

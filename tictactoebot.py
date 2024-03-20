@@ -9,7 +9,8 @@ from dotenv import load_dotenv
 
 from tictactoebot import *
 from tictactoebot.modules.inline_queries import router as InlineQueriesRouter
-
+from tictactoebot.modules.callback_queries import router as CallbackQueriesRouter
+from tictactoebot.modules.commands import router as  CommandsRouter
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -22,7 +23,7 @@ api_token = os.environ.get("TTT_API_TOKEN")
 bot = Bot(token=api_token)
 dp = Dispatcher()
 
-game_data = GameData()
+game_data = DATA_GAME
 
 
 def init_game(chat_id: int, player_symbol, bot_symbol) -> None:
@@ -76,44 +77,10 @@ async def start_game(player_symbol, bot_symbol, message: types.Message):
         reply_markup=make_reply_keyboard(chat_id),
     )
 
-
-@dp.message(Command("profile"))
-async def on_profile(message:types.Message) :
-    user = game_data.get_user(message.from_user.id)
-    username = message.chat.full_name
-
-    text = translate(user.language, 'profile')
-    text = text.format (username, user.language, user.difficulty)
-    await message.reply(text)
-
-
-@dp.message(Command("languages"))
-async def on_change_lang(message: types.Message):
-    code = game_data.get_user(message.from_user.id).language
-    await send_pick_lang(message, code)
-
-
-@dp.message(Command("difficulty"))
-async def on_change_difficulty(message: types.Message):
-    code = game_data.get_user(message.from_user.id).difficulty
-    await send_pick_difficulty(message, code)
-
 async def send_menu(message, code):
     await message.edit_text(
         text=translate(code, "menu"), reply_markup=make_menu_keyboard(code)
     )
-@dp.message(CommandStart())
-async def send_welcome(message: types.Message):
-    user_id = message.from_user.id
-    if game_data.has_user(user_id):
-        code = game_data.get_user(user_id).language
-        await message.answer(
-            text=translate(code, "welcome"), reply_markup=make_menu_keyboard(code)
-        )
-    else:
-        game_data.add_user(message.from_user.id)
-        await send_pick_lang(message, message.from_user.language_code)
-
 
 @dp.callback_query(MenuFilter.filter())
 async def on_menu_btn(query: CallbackQuery, callback_data: MenuFilter) :
@@ -144,14 +111,6 @@ async def on_menu_btn(query: CallbackQuery, callback_data: MenuFilter) :
        await message.edit_text(text, reply_markup=make_difficulty_kb(user.language))
     elif action == 'back':
         await send_menu(message, user.language)
-async def send_pick_lang(message: types.Message, code: str):
-    text = get_translate(code)["pick_lang"]
-    await message.reply(text, reply_markup=make_lang_kb(get_languages_dict()))
-
-async def send_pick_difficulty(message: types.Message, code: str):
-    text = get_translate(code)["difficulty"]
-    await message.reply(text, reply_markup=make_difficulty_kb(code))
-
 
 @dp.callback_query(LanguageFilter.filter())
 async def on_language_picked(query: CallbackQuery, callback_data: LanguageFilter):
@@ -223,6 +182,8 @@ async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
 
 async def main():
     dp.include_router(InlineQueriesRouter)
+    dp.include_router(CallbackQueriesRouter)
+    dp.include_router(CommandsRouter)
     await dp.start_polling(bot, skip_updates=True)
 
 

@@ -1,6 +1,7 @@
 from aiogram import Bot, Router, types
 import os
 
+from ..keyboards import make_invite_kb
 #bot = Bot(token=os.environ.get("TTT_API_TOKEN"))
 router = Router()
 
@@ -13,6 +14,10 @@ async def action_list(inline_query: types.InlineQuery):
             description='Вы предлагаете игроку сыграть в игру',
             input_message_content= types.InputTextMessageContent(
                 message_text='Зову тебя поиграть!'
+            ),
+            reply_markup=make_invite_kb(
+                inline_query.from_user.id,
+                'en'
             )
         )
     ]
