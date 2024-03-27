@@ -29,6 +29,9 @@ class UserData:
     score: Score = field(default_factory=lambda: Score())
     stats: Stats = field(default_factory=lambda: Stats())
 
+    target_id: int = -1
+
+
     def is_cell_empty(self, index: int) -> bool:
         if self.board[index] == Symbol.EMPTY:
             return True

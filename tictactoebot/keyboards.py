@@ -3,7 +3,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from .translate import translate, get_translate
 from .data import Symbol
 from .filters import *
-
+from .constants import DATA_GAME
 def make_lang_kb(langs: dict):
     return make_splited_inline_kb(langs, size=2, filt=LanguageFilter)
 
@@ -100,8 +100,19 @@ def make_menu_keyboard(code):
                     callback_data=MenuFilter(action='difficulty').pack()
                 )
             ],
+            [
+                InlineKeyboardButton(
+                    text=translate(code, 'menu.achievements'),
+                    callback_data=MenuFilter(action='achievements').pack()
+
+                )
+            ]
         ]
-    )
+    )  
+           
+
+      
+        
 def make_back_kb(language): 
     return InlineKeyboardMarkup(
         inline_keyboard=[
@@ -127,3 +138,25 @@ def make_invite_kb(authorId, language):
             ]
         ]
     )
+
+def make_reply_keyboard(chat_id: int):
+    """
+    Cоздает пользовательскую клавиатуру.
+    Клавиатура состоит из сетки кнопок 3x3,
+    каждая из которых имеет индекс от 1 до 9.
+    """
+    keyboard = list()
+    index = 0
+    user = DATA_GAME.get_user(chat_id)
+    for row in range(3):
+        line = list()
+        for column in range(3):
+            index += 1
+            text = user.get_cell(index)
+            btn_filter = FieldFilter(
+                index= index, status= text,
+                user1 = chat_id, user2=0
+                )
+        keyboard.append(line)
+
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)

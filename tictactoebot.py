@@ -5,7 +5,6 @@ import os
 from aiogram import F, Bot, Dispatcher, types
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
 from aiogram.filters import CommandStart, Command
-from dotenv import load_dotenv
 
 from tictactoebot import *
 from tictactoebot.modules.inline_queries import router as InlineQueriesRouter
@@ -16,11 +15,9 @@ logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
-load_dotenv()
 
-api_token = os.environ.get("TTT_API_TOKEN")
 
-bot = Bot(token=api_token)
+bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 game_data = DATA_GAME
@@ -35,29 +32,6 @@ def init_game(chat_id: int, player_symbol, bot_symbol) -> None:
     user.player = player_symbol
     user.bot = bot_symbol
     user.clear()
-
-
-def make_reply_keyboard(chat_id: int):
-    """
-    Cоздает пользовательскую клавиатуру.
-    Клавиатура состоит из сетки кнопок 3x3,
-    каждая из которых имеет индекс от 1 до 9.
-    """
-    keyboard = list()
-    index = 0
-    user = game_data.get_user(chat_id)
-    for row in range(3):
-        line = list()
-        for column in range(3):
-            index += 1
-            text = user.get_cell(index)
-            btn_filter = FieldFilter(
-                index= index, status= text,
-                user1 = chat_id, user2=0
-                )
-        keyboard.append(line)
-
-    return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
 async def start_game(player_symbol, bot_symbol, message: types.Message):
