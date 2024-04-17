@@ -155,12 +155,33 @@ class UserData:
             difficulty=data["difficulty"]
         )
 
+@dataclass
+class Board:
+    board_id: int
+    author_id: int
+    target_id: int
+    data: dict[int, Symbol] = field(default_factory=lambda: dict())
+
+    @classmethod
+    def create(cls, board_id: int, author_id: int,
+                target_id: int):
+        board = cls(
+            board_id, author_id,
+            target_id 
+        )
+        board.clear()
+        return board
+
+    def clear(self):
+        for i in range(1, 10):
+            self.set_cell(i, Symbol.EMPTY)
 
 class GameData:
 
     def __init__(self):
         self.db = Database(DB_NAME)
         self.users = dict()
+        self.boards = dict()
 
     def update_user_score(self, user_id: int, score: Score):
         if user_id in self.users.keys():
@@ -201,4 +222,38 @@ class GameData:
         if user_id in self.users.keys():
             self.users[user_id].difficulty = difficulty
         self.db.change_user_difficulty(user_id, difficulty)
+
+    def add_board(self, author_id: int, target_id: int):
+        board_id = len(self.boards.keys()) + 1
+        board = Board.create(board_id, author_id, target_id)
+        self.boards[board_id] = board
+        return board
+    
+    def get_board(self, board_id: int) -> Board:
+        if not board_id in self.boards.keys():
+            return None
+        return self.boards[board_id]
+
+
+
+    def init_game(self,
+            author_id: int, target_id: int,
+            author_symbol, target_symbol) -> None:
+        """Проводит инициализацию игрового поля и параметров игроков"""
+        author = self.get_user(author_id)
+        if author is None:
+            author = self.add_user(author_id)
+
+        if target_id != 0:
+            target = self.get_user(target_id)
+            if target is None:
+                target = self.add_user(target_id)
+            author.target_id = target.user_id
+            target.target_id = author.user_id
+            self.add_board(author_id, target_id)
+        else:
+            self.add_board(author_id, 0)
+
+
+
 

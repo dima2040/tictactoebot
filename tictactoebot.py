@@ -23,33 +23,7 @@ dp = Dispatcher()
 game_data = DATA_GAME
 
 
-def init_game(chat_id: int, player_symbol, bot_symbol) -> None:
-    """Заполняет игровое поле пустыми символами"""
-    if not game_data.has_user(chat_id):
-        game_data.add_user(chat_id)
 
-    user = game_data.get_user(chat_id)
-    user.player = player_symbol
-    user.bot = bot_symbol
-    user.clear()
-
-
-async def start_game(player_symbol, bot_symbol, message: types.Message):
-    chat_id = message.chat.id
-    init_game(chat_id, player_symbol, bot_symbol)
-    username = message.chat.full_name
-    user = game_data.get_user(chat_id)
-    score = user.score
-
-    message_text = translate(
-        user.language, 'main_reply'
-    ).format(username, 'bot')
-    
-      
-    await message.edit_text(
-        text=message_text,
-        reply_markup=make_reply_keyboard(chat_id),
-    )
 
 async def send_menu(message, code):
     await message.edit_text(
@@ -111,20 +85,6 @@ async def on_difficulty_picked(query: CallbackQuery, callback_data: DifficultyFi
     await send_menu (query.message, language)
 
 
-@dp.callback_query(FieldFilter.filter(F.index == -1))
-async def on_choice_key_pressed(query: CallbackQuery, callback_data: FieldFilter):
-    if query.message is None:
-        return
-
-    player_symbol = callback_data.status
-    if player_symbol == Symbol.CROSS:
-        bot_symbol = Symbol.ZERO
-    else:
-        bot_symbol = Symbol.CROSS
-
-    await start_game(player_symbol, bot_symbol, query.message)
-
-
 @dp.callback_query(FieldFilter.filter(F.index > 0))
 async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
     message = query.message
@@ -142,7 +102,7 @@ async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
 
     user.user_step(callback_data.index)
     user.bot_step()
-    await message.edit_reply_markup(reply_markup=make_reply_keyboard(chat_id))
+    await message.edit_reply_markup(reply_markup=make_board_keyboard(chat_id))
     winner = user.end_game(player_name)
     if winner:
         await message.delete_reply_markup()

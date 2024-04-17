@@ -139,7 +139,7 @@ def make_invite_kb(authorId, language):
         ]
     )
 
-def make_reply_keyboard(chat_id: int):
+def make_board_keyboard(chat_id: int):
     """
     Cоздает пользовательскую клавиатуру.
     Клавиатура состоит из сетки кнопок 3x3,
@@ -157,6 +157,11 @@ def make_reply_keyboard(chat_id: int):
                 index= index, status= text,
                 user1 = chat_id, user2=0
                 )
+            btn = InlineKeyboardButton(
+                text=text,
+                callback_data=btn_filter.pack()
+            )
+            line.append(btn)
         keyboard.append(line)
 
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
