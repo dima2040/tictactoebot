@@ -21,120 +21,10 @@ class Stats:
 @dataclass
 class UserData:
     user_id: int
-    board: dict[int, Symbol] = field(default_factory=lambda: dict())
-    player: Symbol = Symbol.CROSS
-    bot: Symbol = Symbol.ZERO
     language: str = Language.ENGLISH
     difficulty: str = Difficulty.EASY
     score: Score = field(default_factory=lambda: Score())
     stats: Stats = field(default_factory=lambda: Stats())
-
-    target_id: int = -1
-
-
-    def is_cell_empty(self, index: int) -> bool:
-        if self.board[index] == Symbol.EMPTY:
-            return True
-        return False
-
-    def set_cell(self, index: int, symbol: Symbol):
-        self.board[index] = symbol
-
-    def get_cell(self, index: int) -> Symbol:
-        return self.board[index]
-
-    def user_step(self, index: int):
-        """
-        Проверяет есть ли уже символ отличный от пустого
-        в случае если он не задан устанавливает символ игрока
-        """
-        if self.is_cell_empty(index):
-            self.set_cell(index, self.player)
-
-    def bot_step(self):
-        """
-        Делает ход ИИ
-        """
-        empty_cells = self.get_free_positions()
-        if len(empty_cells) == 0:
-            return
-
-        ai_board = {
-            i: self.get_cell_value_for_ai(self.get_cell(i)) for i in range(1, 10)
-        }
-        ai_mapping = {
-            Difficulty.EASY: RandomAI,
-            Difficulty.HARD: MiniMaxAI
-        }
-        move = ai_mapping[self.difficulty](ai_board).move()
-        self.set_cell(move, self.bot)
-
-    def get_cell_value_for_ai(self, value: Symbol) -> int:
-        if value == self.bot:
-            return 1
-        if value == self.player:
-            return -1
-        if value == Symbol.EMPTY:
-            return 0
-        raise ValueError
-
-    def get_free_positions(self) -> list:
-        """Получение списка доступных ходов на игровом поле"""
-        return [index for index in self.board.keys() if self.is_cell_empty(index)]
-
-    def is_bot_winner(self) -> bool:
-        return self.is_winner(self.bot)
-
-    def is_player_winner(self) -> bool:
-        return self.is_winner(self.player)
-
-    def is_winner(self, le):
-        """
-        При задании доски и символа игрока эта функция возвращает True, если игрок выиграл.
-        Мы используем bo вместо board и le вместо letter, чтобы не набирать много текста.
-        """
-        bo = self.board
-        return (
-            (bo[7] == le and bo[8] == le and bo[9] == le)
-            or (bo[4] == le and bo[5] == le and bo[6] == le)
-            or (bo[1] == le and bo[2] == le and bo[3] == le)
-            or (bo[7] == le and bo[4] == le and bo[1] == le)
-            or (bo[8] == le and bo[5] == le and bo[2] == le)
-            or (bo[9] == le and bo[6] == le and bo[3] == le)
-            or (bo[7] == le and bo[5] == le and bo[3] == le)
-            or (bo[9] == le and bo[5] == le and bo[1] == le)
-        )
-
-    def clear(self):
-        for i in range(1, 10):
-            self.set_cell(i, Symbol.EMPTY)
-
-    def end_game(self, player_name) -> Optional[str]:
-        """
-        Проверяет на выйгрышную комбинацию или ничью игрока и бота,
-        в случае конца игры очищает доску и возвращает текст с
-        поздравлением победителя
-        """
-        if self.is_player_winner():
-            self.clear()
-            self.score.player += 1
-            end_game_text = get_translate(self.language)["win.player"]
-            return end_game_text.format(player_name)
-
-        if self.is_bot_winner():
-            self.clear()
-            self.score.bot += 1
-            end_game_text = get_translate(self.language)["win.bot"]
-            return end_game_text
-
-        values = list(self.board.values())
-        if not Symbol.EMPTY in values:
-            self.clear()
-            self.score.draw += 1
-            end_game_text = get_translate(self.language)["draw"]
-            return end_game_text
-
-        return None
 
     def copy(self):
         return deepcopy(self)
@@ -162,12 +52,116 @@ class Board:
     target_id: int
     data: dict[int, Symbol] = field(default_factory=lambda: dict())
 
+    def user_step(self, user_id: int, index: int):
+        """
+        Проверяет есть ли уже символ отличный от пустого
+        в случае если он не задан устанавливает символ игрока
+        """
+        symbol = Symbol.EMPTY
+        if user_id == self.author_id:
+            symbol = self.author_symbol
+        else:
+            symbol = self.target_symbol
+
+        if self.is_cell_empty(index):
+            self.set_cell(index, symbol)
+
+    def is_cell_empty(self, index: int) -> bool:
+        if self.data[index] == Symbol.EMPTY:
+            return True
+        return False
+
+    def set_cell(self, index: int, symbol: Symbol):
+        self.data[index] = symbol
+
+    def get_cell(self, index: int) -> Symbol:
+        return self.data[index]
+
+    def bot_step(self):
+        """
+        Делает ход ИИ
+        """
+        empty_cells = self.get_free_positions()
+        if len(empty_cells) == 0:
+            return
+
+        ai_board = {
+            i: self.get_cell_value_for_ai(self.get_cell(i)) for i in range(1, 10)
+        }
+        ai_mapping = {
+            Difficulty.EASY: RandomAI,
+            Difficulty.HARD: MiniMaxAI
+        }
+        move = ai_mapping[self.difficulty](ai_board).move()
+        self.set_cell(move, self.target_symbol)
+
+    def get_cell_value_for_ai(self, value: Symbol) -> int:
+        if value == self.target_symbol:
+            return 1
+        if value == self.author_symbol:
+            return -1
+        if value == Symbol.EMPTY:
+            return 0
+        raise ValueError
+
+    def get_free_positions(self) -> list:
+        """Получение списка доступных ходов на игровом поле"""
+        return [index for index in self.data.keys() if self.is_cell_empty(index)]
+
+    def is_target_winner(self) -> bool:
+        return self.is_winner(self.target_symbol)
+
+    def is_author_winner(self) -> bool:
+        return self.is_winner(self.author_symbol)
+
+    def is_winner(self, le):
+        """
+        При задании доски и символа игрока эта функция возвращает True, если игрок выиграл.
+        Мы используем bo вместо data и le вместо letter, чтобы не набирать много текста.
+        """
+        bo = self.data
+        return (
+            (bo[7] == le and bo[8] == le and bo[9] == le)
+            or (bo[4] == le and bo[5] == le and bo[6] == le)
+            or (bo[1] == le and bo[2] == le and bo[3] == le)
+            or (bo[7] == le and bo[4] == le and bo[1] == le)
+            or (bo[8] == le and bo[5] == le and bo[2] == le)
+            or (bo[9] == le and bo[6] == le and bo[3] == le)
+            or (bo[7] == le and bo[5] == le and bo[3] == le)
+            or (bo[9] == le and bo[5] == le and bo[1] == le)
+        )
+
+    def end_game(self, author_name, target_name) -> Optional[str]:
+        """
+        Проверяет на выйгрышную комбинацию или ничью игрока и бота,
+        в случае конца игры очищает доску и возвращает текст с
+        поздравлением победителя
+        """
+        if self.is_author_winner():
+            self.clear()
+            #self.score.player += 1
+            end_game_text = get_translate(self.language)["win.player"]
+            return end_game_text.format(author_name)
+
+        if self.is_target_winner():
+            self.clear()
+            #self.score.bot += 1
+            end_game_text = get_translate(self.language)["win.bot"]
+            return end_game_text
+
+        values = list(self.board.values())
+        if not Symbol.EMPTY in values:
+            self.clear()
+            #self.score.draw += 1
+            end_game_text = get_translate(self.language)["draw"]
+            return end_game_text
+
+        return None
+
     @classmethod
-    def create(cls, board_id: int, author_id: int,
-                target_id: int):
+    def create(cls, board_id: int, author_id: int, target_id: int):
         board = cls(
-            board_id, author_id,
-            target_id 
+            board_id, author_id, target_id
         )
         board.clear()
         return board
@@ -175,7 +169,7 @@ class Board:
     def clear(self):
         for i in range(1, 10):
             self.set_cell(i, Symbol.EMPTY)
-
+    
 class GameData:
 
     def __init__(self):
@@ -188,7 +182,7 @@ class GameData:
             self.users[user_id].score = score
         self.db.update_user_score(user_id, score.player, score.bot, score.draw)
 
-    def get_user(self, user_id: int):
+    def get_user(self, user_id: int)-> UserData:
         if not self.has_user(user_id):
             return None
         
@@ -198,7 +192,6 @@ class GameData:
         user = UserData.from_tuple(
             self.db.get_user_by_chat_id(user_id)
         )
-        user.clear()
         self.users[user_id] = user
         return user
 
@@ -223,23 +216,24 @@ class GameData:
             self.users[user_id].difficulty = difficulty
         self.db.change_user_difficulty(user_id, difficulty)
 
-    def add_board(self, author_id: int, target_id: int):
+    def add_board(self, author_id: int, target_id: int)-> Board:
         board_id = len(self.boards.keys()) + 1
         board = Board.create(board_id, author_id, target_id)
         self.boards[board_id] = board
         return board
-    
+
     def get_board(self, board_id: int) -> Board:
         if not board_id in self.boards.keys():
             return None
         return self.boards[board_id]
 
-
-
     def init_game(self,
             author_id: int, target_id: int,
-            author_symbol, target_symbol) -> None:
-        """Проводит инициализацию игрового поля и параметров игроков"""
+            author_symbol, target_symbol) -> Board: 
+        """
+            Проводит инициализацию игрового поля и параметров игроков. 
+           Если target_id=0 создает одиночную игру
+        """
         author = self.get_user(author_id)
         if author is None:
             author = self.add_user(author_id)
@@ -250,10 +244,8 @@ class GameData:
                 target = self.add_user(target_id)
             author.target_id = target.user_id
             target.target_id = author.user_id
-            self.add_board(author_id, target_id)
+
+            return self.add_board(author_id, target_id)
         else:
-            self.add_board(author_id, 0)
-
-
-
+            return self.add_board(author_id, 0)
 

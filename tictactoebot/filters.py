@@ -4,8 +4,10 @@ from aiogram.filters.callback_data import CallbackData
 class FieldFilter(CallbackData, prefix="fd"):
     index: int
     status: str
-    user1: int
-    user2: int
+    board_id:int
+
+class PickFilter(CallbackData, prefix="pick"):
+    value: str
 
 class LanguageFilter(CallbackData, prefix = "lang"):
     code: str

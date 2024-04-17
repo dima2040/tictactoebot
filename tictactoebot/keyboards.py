@@ -40,16 +40,16 @@ def make_choice_keyboard() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton(
                 text=Symbol.CROSS,
-                callback_data=FieldFilter(
-                    index=-1, status=Symbol.CROSS,
-                    user1 = 0, user2 = 0
+                callback_data=PickFilter(
+                value =Symbol.CROSS,
+                    
                 ).pack(),
             ),
             InlineKeyboardButton(
                 text=Symbol.ZERO,
-                callback_data=FieldFilter(
-                    index=-1, status=Symbol.ZERO,
-                    user1 = 0, user2 = 0
+                callback_data=PickFilter(
+                value =Symbol.ZERO,
+                  
             ).pack(),
             ),
         ]
@@ -139,7 +139,7 @@ def make_invite_kb(authorId, language):
         ]
     )
 
-def make_board_keyboard(chat_id: int):
+def make_board_keyboard(board, chat_id: int):
     """
     Cоздает пользовательскую клавиатуру.
     Клавиатура состоит из сетки кнопок 3x3,
@@ -147,15 +147,14 @@ def make_board_keyboard(chat_id: int):
     """
     keyboard = list()
     index = 0
-    user = DATA_GAME.get_user(chat_id)
     for row in range(3):
         line = list()
         for column in range(3):
             index += 1
-            text = user.get_cell(index)
+            text = board.get_cell(index)
             btn_filter = FieldFilter(
                 index= index, status= text,
-                user1 = chat_id, user2=0
+                board_id = board.board_id
                 )
             btn = InlineKeyboardButton(
                 text=text,
