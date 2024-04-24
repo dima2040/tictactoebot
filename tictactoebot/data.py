@@ -50,7 +50,11 @@ class Board:
     board_id: int
     author_id: int
     target_id: int
+    author_symbol: Symbol
+    target_symbol: Symbol
     data: dict[int, Symbol] = field(default_factory=lambda: dict())
+    next_step: int = 0
+
 
     def user_step(self, user_id: int, index: int):
         """
@@ -60,8 +64,10 @@ class Board:
         symbol = Symbol.EMPTY
         if user_id == self.author_id:
             symbol = self.author_symbol
+            self.next_step = self.target_id
         else:
             symbol = self.target_symbol
+            self.next_step = self.author_id
 
         if self.is_cell_empty(index):
             self.set_cell(index, symbol)
@@ -77,7 +83,7 @@ class Board:
     def get_cell(self, index: int) -> Symbol:
         return self.data[index]
 
-    def bot_step(self):
+    def bot_step(self, difficulty):
         """
         Делает ход ИИ
         """
@@ -92,8 +98,9 @@ class Board:
             Difficulty.EASY: RandomAI,
             Difficulty.HARD: MiniMaxAI
         }
-        move = ai_mapping[self.difficulty](ai_board).move()
+        move = ai_mapping[difficulty](ai_board).move()  
         self.set_cell(move, self.target_symbol)
+        self.next_step = self.author_id
 
     def get_cell_value_for_ai(self, value: Symbol) -> int:
         if value == self.target_symbol:
@@ -131,7 +138,7 @@ class Board:
             or (bo[9] == le and bo[5] == le and bo[1] == le)
         )
 
-    def end_game(self, author_name, target_name) -> Optional[str]:
+    def end_game(self, author_name, target_name, language) -> Optional[str]:
         """
         Проверяет на выйгрышную комбинацию или ничью игрока и бота,
         в случае конца игры очищает доску и возвращает текст с
@@ -140,30 +147,32 @@ class Board:
         if self.is_author_winner():
             self.clear()
             #self.score.player += 1
-            end_game_text = get_translate(self.language)["win.player"]
+            end_game_text = get_translate(language)["win.player"]
             return end_game_text.format(author_name)
 
         if self.is_target_winner():
             self.clear()
             #self.score.bot += 1
-            end_game_text = get_translate(self.language)["win.bot"]
+            end_game_text = get_translate(language)["win.bot"]
             return end_game_text
 
-        values = list(self.board.values())
+        values = list(self.data.values())
         if not Symbol.EMPTY in values:
             self.clear()
             #self.score.draw += 1
-            end_game_text = get_translate(self.language)["draw"]
+            end_game_text = get_translate(language)["draw"]
             return end_game_text
 
         return None
 
     @classmethod
-    def create(cls, board_id: int, author_id: int, target_id: int):
+    def create(cls, board_id: int, author_id: int, target_id: int, author_symbol, target_symbol):
         board = cls(
-            board_id, author_id, target_id
+            board_id, author_id, target_id, author_symbol, target_symbol
         )
         board.clear()
+        board.next_step  = author_id
+        
         return board
 
     def clear(self):
@@ -216,9 +225,11 @@ class GameData:
             self.users[user_id].difficulty = difficulty
         self.db.change_user_difficulty(user_id, difficulty)
 
-    def add_board(self, author_id: int, target_id: int)-> Board:
+    def add_board(self,
+            author_id: int, target_id: int,
+            author_symbol, target_symbol) -> Board:
         board_id = len(self.boards.keys()) + 1
-        board = Board.create(board_id, author_id, target_id)
+        board = Board.create(board_id, author_id, target_id, author_symbol, target_symbol)
         self.boards[board_id] = board
         return board
 
@@ -245,7 +256,14 @@ class GameData:
             author.target_id = target.user_id
             target.target_id = author.user_id
 
-            return self.add_board(author_id, target_id)
+            return self.add_board(
+                author_id, target_id,
+                author_symbol, target_symbol 
+            )
         else:
-            return self.add_board(author_id, 0)
+            return self.add_board(
+                author_id, 0,
+                author_symbol,
+                target_symbol
+                 )
 

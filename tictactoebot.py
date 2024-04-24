@@ -84,36 +84,6 @@ async def on_difficulty_picked(query: CallbackQuery, callback_data: DifficultyFi
 
     await send_menu (query.message, language)
 
-
-@dp.callback_query(FieldFilter.filter(F.index > 0))
-async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
-    message = query.message
-    if message is None:
-        return
-
-    chat_id = message.chat.id
-    player_name = message.chat.full_name
-    user = game_data.get_user(chat_id)
-    # TODO Load user score from db
-    score = user.score
-
-    if not user.is_cell_empty(callback_data.index):
-         return
-
-    user.user_step(callback_data.index)
-    user.bot_step()
-    await message.edit_reply_markup(reply_markup=make_board_keyboard(chat_id))
-    winner = user.end_game(player_name)
-    if winner:
-        await message.delete_reply_markup()
-        score_text = get_translate(user.language)["main_reply"]
-        await message.edit_text(
-            winner
-            + "\n"
-            + score_text.format(player_name, score.player, score.bot, score.draw)
-        )
-
-
 async def main():
     dp.include_router(InlineQueriesRouter)
     dp.include_router(CallbackQueriesRouter)

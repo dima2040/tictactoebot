@@ -72,8 +72,6 @@ async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
     Функция, запускающаяся при нажатии на любую клетку на поле
     """
     message = query.message
-    if message is None:
-        return
 
     # Получаем игровое поле по его айди, записанном в кнопке
     board = DATA_GAME.get_board(callback_data.board_id)
@@ -84,9 +82,11 @@ async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
     # пропускаем это нажатие и завершаем функцию
     if not user_id in (board.author_id, board.target_id):
         return
+    if user_id != board.next_step:
+        return
 
     # Получаем класс пользователя, его имя и счет
-    player_name = message.chat.full_name
+    player_name = query.from_user.full_name
     user = DATA_GAME.get_user(user_id)
     score = user.score
 
@@ -98,18 +98,37 @@ async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
     board.user_step(user_id, callback_data.index)
     # Если айди противника - 0 (он бот), то делаем за него ход
     if board.target_id == 0:
-        user.bot_step()
+        board.bot_step(user.difficulty)
 
     # Обновляем клавиатуру после хода игроков
-    await message.edit_reply_markup(reply_markup=make_board_keyboard(board, user_id))
+    if message is None:
+        await bot.edit_message_reply_markup(
+            inline_message_id=query.inline_message_id,
+            reply_markup=make_board_keyboard(board, user_id)
+        )
+    else:
+        await message.edit_reply_markup(
+            reply_markup=make_board_keyboard(board, user_id)
+        ) 
 
     # Проверяем победителя, если кто-то победил - удаляем поле и редактируем сообщение
-    winner = board.end_game(player_name)
+    winner = board.end_game(player_name, "target", user.language)
     if winner:
-        await message.delete_reply_markup()
         score_text = get_translate(user.language)["main_reply"]
-        await message.edit_text(
-            winner
-            + "\n"
-            + score_text.format(player_name, score.player, score.bot, score.draw)
-        )
+        if message is None: # Если используется inline сообщение (100% мультиплеер)
+            await bot.edit_message_reply_markup(
+                inline_message_id=query.inline_message_id
+            )
+            await bot.edit_message_text(
+                winner
+                + "\n"
+                + score_text.format(player_name, score.player, score.bot, score.draw),
+                inline_message_id=query.inline_message_id
+            )
+        else:
+            await message.delete_reply_markup()
+            await message.edit_text(
+                winner
+                + "\n"
+                + score_text.format(player_name, score.player, score.bot, score.draw)
+            )
