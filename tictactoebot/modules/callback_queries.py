@@ -15,7 +15,7 @@ router = Router()
 @router.callback_query(InviteFilter.filter())
 async def on_invite_btn(query: types.CallbackQuery, callback_data: InviteFilter):
     if query.from_user.id == callback_data.author:
-        await query.answer('Вы автор приглашения!')
+        await query.answer('Вы не можете играть сам с собой!')
         return
 
     author_obj = await bot.get_chat(callback_data.author)
@@ -24,20 +24,23 @@ async def on_invite_btn(query: types.CallbackQuery, callback_data: InviteFilter)
 
     board = DATA_GAME.init_game(
         callback_data.author, query.from_user.id,
+        author_name, target_name,
         Symbol.CROSS, Symbol.ZERO
     )
 
     await bot.edit_message_text(
-        text =f"{author_name}  vs  {target_name}",
+        text =f"{author_name}  vs  {target_name}\n\nХодит {author_name}.",
         inline_message_id=query.inline_message_id,
         reply_markup=make_board_keyboard(board, query.from_user.id)
     )
 
 async def start_game(author_id, target_id, player_symbol, bot_symbol, message: types.Message):
-    board = DATA_GAME.init_game(
-    author_id, target_id, player_symbol, bot_symbol
-    )
     username = message.chat.full_name
+    board = DATA_GAME.init_game(
+        author_id, target_id,
+        username, 'Bot',
+        player_symbol, bot_symbol
+    )
     user = DATA_GAME.get_user(author_id)
     score = user.score
 
@@ -81,8 +84,10 @@ async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
     # Если айди пользователя не совпадает с игроками, записанными в поле, то 
     # пропускаем это нажатие и завершаем функцию
     if not user_id in (board.author_id, board.target_id):
+        await query.answer("Вы не участвуете в игре!")
         return
     if user_id != board.next_step:
+        await query.answer("Сейчас не ваш ход!")
         return
 
     # Получаем класс пользователя, его имя и счет
@@ -92,6 +97,7 @@ async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
 
     # Если нажатая клетка не пустая, то пропускаем действие
     if not board.is_cell_empty(callback_data.index):
+        await query.answer("Эта клетка занята!")
         return
 
     # Делаем ход от лица пользователя в нажатую клетку
@@ -100,14 +106,21 @@ async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
     if board.target_id == 0:
         board.bot_step(user.difficulty)
 
+    if user_id == board.author_id:
+        next_step_user_name = board.target_name
+    else:
+        next_step_user_name = board.author_name
+
     # Обновляем клавиатуру после хода игроков
     if message is None:
-        await bot.edit_message_reply_markup(
+        await bot.edit_message_text(
+            text=f"{board.author_name} vs {board.target_name}\n\nХодит: {next_step_user_name}",
             inline_message_id=query.inline_message_id,
             reply_markup=make_board_keyboard(board, user_id)
         )
     else:
-        await message.edit_reply_markup(
+        await message.edit_text(
+            text=f"{board.author_name} vs {board.target_name}\n\nХодит: {next_step_user_name}",
             reply_markup=make_board_keyboard(board, user_id)
         ) 
 

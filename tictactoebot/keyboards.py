@@ -1,9 +1,11 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types.switch_inline_query_chosen_chat import SwitchInlineQueryChosenChat
 
 from .translate import translate, get_translate
 from .data import Symbol
 from .filters import *
 from .constants import DATA_GAME
+
 def make_lang_kb(langs: dict):
     return make_splited_inline_kb(langs, size=2, filt=LanguageFilter)
 
@@ -80,8 +82,11 @@ def make_menu_keyboard(code):
                     callback_data=MenuFilter(action='singleplayer').pack()
                 ),
                 InlineKeyboardButton(
+                    switch_inline_query_chosen_chat=SwitchInlineQueryChosenChat(
+                        allow_user_chats=True
+                    ),
                     text=translate(code, 'menu.multiplayer'),
-                    callback_data=MenuFilter(action='multiplayer').pack()
+                    #callback_data=MenuFilter(action='multiplayer').pack()
                 )
             ],
             [

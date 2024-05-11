@@ -50,6 +50,8 @@ class Board:
     board_id: int
     author_id: int
     target_id: int
+    author_name: str
+    target_name: str
     author_symbol: Symbol
     target_symbol: Symbol
     data: dict[int, Symbol] = field(default_factory=lambda: dict())
@@ -166,9 +168,14 @@ class Board:
         return None
 
     @classmethod
-    def create(cls, board_id: int, author_id: int, target_id: int, author_symbol, target_symbol):
+    def create(cls, board_id: int, author_id: int,
+                target_id: int, author_name: str,
+                target_name: str, author_symbol,
+                target_symbol):
         board = cls(
-            board_id, author_id, target_id, author_symbol, target_symbol
+            board_id, author_id, target_id,
+            author_name, target_name,
+            author_symbol, target_symbol
         )
         board.clear()
         board.next_step  = author_id
@@ -227,9 +234,15 @@ class GameData:
 
     def add_board(self,
             author_id: int, target_id: int,
+            author_name: str, target_name: str,
             author_symbol, target_symbol) -> Board:
         board_id = len(self.boards.keys()) + 1
-        board = Board.create(board_id, author_id, target_id, author_symbol, target_symbol)
+        board = Board.create(
+            board_id, author_id,
+            target_id, author_name,
+            target_name, author_symbol,
+            target_symbol
+        )
         self.boards[board_id] = board
         return board
 
@@ -240,6 +253,7 @@ class GameData:
 
     def init_game(self,
             author_id: int, target_id: int,
+            author_name: str, target_name: str,
             author_symbol, target_symbol) -> Board: 
         """
             Проводит инициализацию игрового поля и параметров игроков. 
@@ -258,12 +272,15 @@ class GameData:
 
             return self.add_board(
                 author_id, target_id,
+                author_name, target_name,
                 author_symbol, target_symbol 
             )
         else:
             return self.add_board(
                 author_id, 0,
+                author_name, 
+                target_name,
                 author_symbol,
                 target_symbol
-                 )
+            )
 
