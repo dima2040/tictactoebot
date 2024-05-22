@@ -1,14 +1,14 @@
 from aiogram import Bot, Router, types, F
 from aiogram.types import CallbackQuery
 import os
-
+from ..translate import get_languages_dict
 from ..constants import BOT_TOKEN, DATA_GAME
 from ..filters import InviteFilter
 from ..keyboards import make_board_keyboard
 from ..data import Symbol
 from ..keyboards import *
 from ..filters import *
-
+from aiogram.enums import ParseMode
 bot = Bot(BOT_TOKEN)
 router = Router()
 
@@ -145,3 +145,67 @@ async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
                 + "\n"
                 + score_text.format(player_name, score.player, score.bot, score.draw)
             )
+async def send_menu(message, code):
+    await message.edit_text(
+        text=translate(code, "menu"), reply_markup=make_menu_keyboard(code)
+    )
+
+@router.callback_query(MenuFilter.filter())
+async def on_menu_btn(query: CallbackQuery, callback_data: MenuFilter) :
+    message = query.message
+    user_id = query.from_user.id
+    user = DATA_GAME.get_user(user_id)
+    username = message.chat.full_name
+    action = callback_data.action
+    
+    if action == 'singleplayer':
+        await message.edit_text(
+            text=translate(user.language, 'welcome'),
+            reply_markup=make_choice_keyboard()
+        )
+    elif action == 'achievements':
+        await query.answer('Этот раздел еще не готов!')
+    elif action == 'profile':
+        text = translate(user.language, 'profile')
+        text = text.format(username, user.language, user.difficulty, 0, 0, 0)
+        await message.edit_text(
+        text, reply_markup=make_back_kb(user.language),
+        parse_mode = ParseMode.HTML
+        )
+ 
+    elif action == 'language':
+       text = translate(user.language,"pick_lang")
+       await message.edit_text(text, reply_markup=make_lang_kb(
+           user.language, get_languages_dict()
+       ))
+
+    
+    elif action == 'difficulty':
+       text = translate(user.language,"difficulty")
+       await message.edit_text(text, reply_markup=make_difficulty_kb(user.language))
+    elif action == 'back':
+        await send_menu(message, user.language)
+
+@router.callback_query(LanguageFilter.filter())
+async def on_language_picked(query: CallbackQuery, callback_data: LanguageFilter):
+    if query.message is None:
+        return
+    code = callback_data.code
+    user_id = query.from_user.id
+
+    DATA_GAME.change_user_language(user_id, code)
+
+    await send_menu(query.message, code)
+
+@router.callback_query(DifficultyFilter.filter())
+async def on_difficulty_picked(query: CallbackQuery, callback_data: DifficultyFilter):
+    if query.message is None:
+        return
+
+    level = callback_data.level
+    user_id = query.from_user.id
+    DATA_GAME.change_user_difficulty(user_id, level)
+    user = DATA_GAME.get_user(user_id)
+    language = user.language
+
+    await send_menu (query.message, language)

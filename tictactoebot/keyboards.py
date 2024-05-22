@@ -6,11 +6,11 @@ from .data import Symbol
 from .filters import *
 from .constants import DATA_GAME
 
-def make_lang_kb(langs: dict):
-    return make_splited_inline_kb(langs, size=2, filt=LanguageFilter)
+def make_lang_kb(language, langs: dict):
+    return make_splited_inline_kb(language,langs, size=2, filt=LanguageFilter)
 
 
-def make_splited_inline_kb(langs: dict, size: int=3, filt=None):
+def make_splited_inline_kb(language,langs: dict, size: int=3, filt=None):
     parent: list = list()
     child: list = list()
     parent.append(child)
@@ -27,6 +27,16 @@ def make_splited_inline_kb(langs: dict, size: int=3, filt=None):
             child = list()
             parent.append(child)
             index = 0
+
+
+    parent.append(
+        [
+            InlineKeyboardButton(
+                text=translate(language, 'menu.back'),
+                callback_data=MenuFilter(action='back').pack()
+            )
+        ]
+    )
 
     return InlineKeyboardMarkup(
         inline_keyboard=parent
@@ -70,6 +80,12 @@ def make_difficulty_kb(code):
                     text=get_translate(code)['difficulty.hard'],
                     callback_data=DifficultyFilter(level='hard').pack()
                 )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=translate(code, 'menu.back'),
+                    callback_data=MenuFilter(action='back').pack()
+                )
             ]
         ]
     )
@@ -110,6 +126,10 @@ def make_menu_keyboard(code):
                     text=translate(code, 'menu.achievements'),
                     callback_data=MenuFilter(action='achievements').pack()
 
+                ),
+                 InlineKeyboardButton(
+                    text=translate(code, 'menu.skins'),
+                    callback_data=MenuFilter(action='skins').pack()
                 )
             ]
         ]
