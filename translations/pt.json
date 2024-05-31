@@ -16,5 +16,7 @@
     "menu.profile" : "👨 Perfil",
     "menu.language" : "🇬🇧 Language",
     "menu.dificulty" : "Dificuldade",
-    "menu.back" : "Voltar"
+    "menu.back" : "Voltar",
+    "mp.invite_btn" : "Jogar!",
+    "menu.skins" : "Skins"
 }

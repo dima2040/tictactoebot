@@ -19,5 +19,6 @@
     "menu.back" : "Back ↩️",
     "menu.achievements" : "Achievements", 
     "mp.invite_btn" : "Play!",
-    "menu.skins" : "Skins"
+    "menu.skins" : "Skins",
+    "restart" : "Play again?"
 }

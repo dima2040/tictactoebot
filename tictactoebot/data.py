@@ -9,9 +9,15 @@ from .db import Database, DB_NAME
 
 @dataclass
 class Score:
+    user_id: int = 0
     player: int = 0
     bot: int = 0
+    enemy: int = 0
     draw: int = 0
+
+    @classmethod
+    def from_tuple(cls, data: tuple):
+        return cls(*data[1:])
 
 @dataclass
 class Stats:
@@ -207,6 +213,12 @@ class GameData:
 
         user = UserData.from_tuple(
             self.db.get_user_by_chat_id(user_id)
+        )
+        raw_score = self.db.get_user_score_by_user_id(user_id)
+        if raw_score:
+            user.score = Score.from_tuple(
+                raw_score
+          
         )
         self.users[user_id] = user
         return user

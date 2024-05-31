@@ -9,7 +9,7 @@ router = Router()
 
 async def send_pick_lang(message: types.Message, code: str):
     text = get_translate(code)["pick_lang"]
-    await message.reply(text, reply_markup=make_lang_kb(get_languages_dict()))
+    await message.reply(text, reply_markup=make_lang_kb(code, get_languages_dict()))
 
 async def send_pick_difficulty(message: types.Message, code: str):
     text = get_translate(code)["difficulty"]

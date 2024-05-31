@@ -50,6 +50,7 @@ class Database:
                 user_id INTEGER,
                 player INTEGER DEFAULT 0,
                 bot INTEGER DEFAULT 0,
+                enemy INTEGER DEFAULT 0,
                 draw INTEGER DEFAULT 0,
                 FOREIGN KEY(user_id) REFERENCES User(id)
             )
@@ -65,11 +66,8 @@ class Database:
     ) -> None:
         self.cursor.execute('INSERT INTO User (chat_id, language, difficulty) VALUES (?, ?, ?)', (chat_id, language, difficulty))
         
-        # Получение id добавленного пользователя
-        user_id = self.cursor.lastrowid
-        
         # Добавление score для добавленного пользователя
-        self.cursor.execute('INSERT INTO Score (user_id, player, bot, draw) VALUES (?, 0, 0, 0)', (user_id,))
+        self.cursor.execute('INSERT INTO Score (user_id, player, bot, enemy, draw) VALUES (?, 0, 0, 0, 0)', (chat_id,))
         
         self.conn.commit()
 
@@ -115,16 +113,17 @@ class Database:
         logger.info(f"Get user:{user_id} score:{result} from db")
         return result
 
-    def update_user_score(self, user_id: int, player: int, bot: int, draw: int) -> None:
+    def update_user_score(self, user_id: int, player: int, bot: int, enemy: int, draw: int) -> None:
         self.cursor.execute(
         """
             UPDATE Score 
             SET player = ?,
                 bot = ?,
+                enemy = ?,
                 draw = ?
             WHERE user_id = ?
         """,
-            (player, bot, draw, user_id),
+            (player, bot, enemy, draw, user_id),
         )
         logger.info(f"Updated user:{user_id} scores")
         self.conn.commit()

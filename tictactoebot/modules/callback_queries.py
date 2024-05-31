@@ -136,14 +136,17 @@ async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
                 winner
                 + "\n"
                 + score_text.format(player_name, score.player, score.bot, score.draw),
-                inline_message_id=query.inline_message_id
+                inline_message_id=query.inline_message_id,
+                reply_markup=make_restart_mp_kb(user.language),
+
             )
         else:
             await message.delete_reply_markup()
             await message.edit_text(
                 winner
                 + "\n"
-                + score_text.format(player_name, score.player, score.bot, score.draw)
+                + score_text.format(player_name, score.player, score.bot, score.draw),
+                 reply_markup=make_restart_sp_kb(user.language)
             )
 async def send_menu(message, code):
     await message.edit_text(
@@ -167,7 +170,11 @@ async def on_menu_btn(query: CallbackQuery, callback_data: MenuFilter) :
         await query.answer('Этот раздел еще не готов!')
     elif action == 'profile':
         text = translate(user.language, 'profile')
-        text = text.format(username, user.language, user.difficulty, 0, 0, 0)
+        text = text.format(
+            username, user.language,
+            user.difficulty, user.score.player,
+            user.score.bot, user.score.enemy,
+            user.score.draw)
         await message.edit_text(
         text, reply_markup=make_back_kb(user.language),
         parse_mode = ParseMode.HTML

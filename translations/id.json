@@ -16,5 +16,7 @@
     "menu.profile" : "👨 Profil",
     "menu.language" : "🇬🇧 Language",
     "menu.difficulty" : "Kesulitan",
-    "menu.back" : "Kembali"
+    "menu.back" : "Kembali",
+    "mp.invite_btn" : "Mainkan!",
+    "menu.skins" : "Skins"
 }

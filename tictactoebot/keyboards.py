@@ -189,3 +189,31 @@ def make_board_keyboard(board, chat_id: int):
         keyboard.append(line)
 
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+def make_restart_mp_kb (code) :
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    switch_inline_query_current_chat="",
+                    text=translate(code, 'restart'),
+                )
+            ]
+        ]
+    )
+
+def make_restart_sp_kb(code):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=translate(code, "restart"),
+                    callback_data=MenuFilter(action='singleplayer').pack()
+                ),
+                InlineKeyboardButton(
+                     text=translate(code, "menu.back"),
+                    callback_data=MenuFilter(action='back').pack()
+                )
+            ]
+        ]
+    )
