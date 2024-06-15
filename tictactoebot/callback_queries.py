@@ -1,16 +1,20 @@
 from aiogram import Bot, Router, types, F
 from aiogram.types import CallbackQuery
-import os
-from ..translate import get_languages_dict
-from ..constants import BOT_TOKEN, DATA_GAME
-from ..filters import InviteFilter
-from ..keyboards import make_board_keyboard
-from ..data import Symbol
-from ..keyboards import *
-from ..filters import *
 from aiogram.enums import ParseMode
+
+from .translate import get_languages_dict
+from .config import BOT_TOKEN
+from tictactoebot.data import DATA_GAME
+from .filters import InviteFilter
+from .keyboards import make_board_keyboard
+from tictactoebot.enums import Symbol
+from .keyboards import *
+from .filters import *
+
+
 bot = Bot(BOT_TOKEN)
 router = Router()
+
 
 @router.callback_query(InviteFilter.filter())
 async def on_invite_btn(query: types.CallbackQuery, callback_data: InviteFilter):
@@ -34,7 +38,8 @@ async def on_invite_btn(query: types.CallbackQuery, callback_data: InviteFilter)
         reply_markup=make_board_keyboard(board, query.from_user.id)
     )
 
-async def start_game(author_id, target_id, player_symbol, bot_symbol, message: types.Message):
+
+async def _start_game(author_id, target_id, player_symbol, bot_symbol, message: types.Message):
     username = message.chat.full_name
     board = DATA_GAME.init_game(
         author_id, target_id,
@@ -55,7 +60,6 @@ async def start_game(author_id, target_id, player_symbol, bot_symbol, message: t
     )
 
 
-
 @router.callback_query(PickFilter.filter())
 async def on_choice_key_pressed(query: CallbackQuery, callback_data: PickFilter):
     if query.message is None:
@@ -67,7 +71,8 @@ async def on_choice_key_pressed(query: CallbackQuery, callback_data: PickFilter)
     else:
         bot_symbol = Symbol.CROSS
 
-    await start_game(query.from_user.id, 0, player_symbol, bot_symbol, query.message)
+    await _start_game(query.from_user.id, 0, player_symbol, bot_symbol, query.message)
+
 
 @router.callback_query(FieldFilter.filter(F.index > 0))
 async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
@@ -148,10 +153,13 @@ async def on_board_pressed(query: CallbackQuery, callback_data: FieldFilter):
                 + score_text.format(player_name, score.player, score.bot, score.draw),
                  reply_markup=make_restart_sp_kb(user.language)
             )
-async def send_menu(message, code):
+
+
+async def _send_menu(message, code):
     await message.edit_text(
         text=translate(code, "menu"), reply_markup=make_menu_keyboard(code)
     )
+
 
 @router.callback_query(MenuFilter.filter())
 async def on_menu_btn(query: CallbackQuery, callback_data: MenuFilter) :
@@ -191,7 +199,8 @@ async def on_menu_btn(query: CallbackQuery, callback_data: MenuFilter) :
        text = translate(user.language,"difficulty")
        await message.edit_text(text, reply_markup=make_difficulty_kb(user.language))
     elif action == 'back':
-        await send_menu(message, user.language)
+        await _send_menu(message, user.language)
+
 
 @router.callback_query(LanguageFilter.filter())
 async def on_language_picked(query: CallbackQuery, callback_data: LanguageFilter):
@@ -202,7 +211,8 @@ async def on_language_picked(query: CallbackQuery, callback_data: LanguageFilter
 
     DATA_GAME.change_user_language(user_id, code)
 
-    await send_menu(query.message, code)
+    await _send_menu(query.message, code)
+
 
 @router.callback_query(DifficultyFilter.filter())
 async def on_difficulty_picked(query: CallbackQuery, callback_data: DifficultyFilter):
@@ -215,4 +225,4 @@ async def on_difficulty_picked(query: CallbackQuery, callback_data: DifficultyFi
     user = DATA_GAME.get_user(user_id)
     language = user.language
 
-    await send_menu (query.message, language)
+    await _send_menu (query.message, language)

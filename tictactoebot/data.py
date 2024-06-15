@@ -1,11 +1,12 @@
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Optional
-import json
+
 from .translate import get_translate
 from .ai import *
 from .enums import *
 from .db import Database, DB_NAME
+
 
 @dataclass
 class Score:
@@ -19,10 +20,12 @@ class Score:
     def from_tuple(cls, data: tuple):
         return cls(*data[1:])
 
+
 @dataclass
 class Stats:
     hard_bot_win_count: int = 0
     easy_bot_defeat_count: int = 0
+
 
 @dataclass
 class UserData:
@@ -50,6 +53,7 @@ class UserData:
             language=data["language"],
             difficulty=data["difficulty"]
         )
+
 
 @dataclass
 class Board:
@@ -191,7 +195,8 @@ class Board:
     def clear(self):
         for i in range(1, 10):
             self.set_cell(i, Symbol.EMPTY)
-    
+
+
 class GameData:
 
     def __init__(self):
@@ -268,7 +273,7 @@ class GameData:
             author_name: str, target_name: str,
             author_symbol, target_symbol) -> Board: 
         """
-            Проводит инициализацию игрового поля и параметров игроков. 
+           Проводит инициализацию игрового поля и параметров игроков. 
            Если target_id=0 создает одиночную игру
         """
         author = self.get_user(author_id)
@@ -296,3 +301,5 @@ class GameData:
                 target_symbol
             )
 
+
+DATA_GAME=GameData()

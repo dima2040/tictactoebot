@@ -1,31 +1,24 @@
 import asyncio
-import logging
-import os
+import logging.config
 
-from aiogram import F, Bot, Dispatcher, types
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
-from aiogram.filters import CommandStart, Command
+from aiogram import Bot, Dispatcher
 
-from tictactoebot import *
-from tictactoebot.modules.inline_queries import router as InlineQueriesRouter
-from tictactoebot.modules.callback_queries import router as CallbackQueriesRouter
-from tictactoebot.modules.commands import router as  CommandsRouter
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+from tictactoebot.config import BOT_TOKEN, LOGGING_CONFIG
+from tictactoebot.inline_queries import router as InlineQueriesRouter
+from tictactoebot.callback_queries import router as CallbackQueriesRouter
+from tictactoebot.commands import router as CommandsRouter
 
 
+async def main() -> None:
+    logging.config.dictConfig(LOGGING_CONFIG)
 
-bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
-
-
-
-async def main():
+    bot = Bot(token=BOT_TOKEN)
+    dp = Dispatcher()
+    
     dp.include_router(InlineQueriesRouter)
     dp.include_router(CallbackQueriesRouter)
     dp.include_router(CommandsRouter)
+
     await dp.start_polling(bot, skip_updates=True)
 
 

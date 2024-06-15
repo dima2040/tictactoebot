@@ -4,7 +4,6 @@ from aiogram.types.switch_inline_query_chosen_chat import SwitchInlineQueryChose
 from .translate import translate, get_translate
 from .data import Symbol
 from .filters import *
-from .constants import DATA_GAME
 
 def make_lang_kb(language, langs: dict):
     return make_splited_inline_kb(language,langs, size=2, filt=LanguageFilter)

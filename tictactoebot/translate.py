@@ -1,52 +1,44 @@
 import json
 import os
+from typing import List, Dict, Optional
 
 
-translations_dir = os.path.dirname(os.path.dirname(__file__)) + "/translations/"
+translations_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "translations")
 
 
-def get_languages() -> list:
-    langs = list()
-    for file in os.listdir(translations_dir):
-        name = file.replace(".json", "")
-        langs.append(name)
-    return langs
+def get_languages() -> List[str]:
+    """Retrieve the list of language codes available in the translations directory."""
+    return [
+        os.path.splitext(file)[0] for file in os.listdir(translations_dir) if file.endswith('.json')
+    ]
 
 
-def get_languages_dict() -> dict:
-    langs = dict()
-    for file in os.listdir(translations_dir):
-        code = file.replace(".json", "")
-        with open(f"{translations_dir}{file}") as f:
-            data = json.load(f)
-        name = data['name']
-        langs[code] = name
-    return langs
+def load_translation_file(language: str) -> Optional[Dict]:
+    """Load and return the translation dictionary for a given language code."""
+    file_path = os.path.join(translations_dir, f"{language}.json")
+    if os.path.isfile(file_path):
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return None
 
 
-def is_lang_supported(name: str) -> bool:
-    return name in get_languages()
+def get_translate(language: str) -> Dict:
+    """Get translation dictionary for a specific language, falling back to English if necessary."""
+    return load_translation_file(language) or load_translation_file('en') or {}
 
 
-def find_translate(name: str) -> dict:
-    for file in os.listdir(translations_dir):
-        filename = file.replace(".json", "")
-        if name == filename:
-            return json.load(open(f"{translations_dir}{file}"))
-    return {}
+def translate(language: str, key: str) -> str:
+    """Translate a given key to the specified language, falling back to English if the key is not found."""
+    translation = get_translate(language)
+    return translation.get(key, get_translate('en').get(key, ''))
 
 
-def get_translate(name: str) -> dict:
-    if is_lang_supported(name):
-        return find_translate(name)
-    else:
-        return find_translate('en')
-
-
-def translate (name: str, key: str) -> str:
-    tr = get_translate(name)
-    if key in tr.keys():
-        return tr[key]
-    else:
-        tr = get_translate('en')
-        return tr[key]
+def get_languages_dict() -> Dict[str, str]:
+    """Retrieve a dictionary of language codes and their corresponding names."""
+    languages = {}
+    for language in get_languages():
+        data = load_translation_file(language)
+        if data:
+            name = data.get('name', 'Unknown')
+            languages[language] = name
+    return languages
